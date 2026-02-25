@@ -2,8 +2,6 @@
 /* @import "tailwindcss/preflight.css" layer(tailwind.reset); <-- skipped intentionally */
 @import "tailwindcss/utilities" layer(tailwind.utilities);
 
-@config "../../tailwind.config.ts";
-
 @theme {
   --font-heading: "Bricolage Grotesque", sans-serif;
   --font-body: Sen, sans-serif;
@@ -51,6 +49,13 @@
 @source inline('font-body');
 @source inline('font-heading');
 @source inline('font-mono');
+
+@source not inline('rounded-xs');
+@source not inline('rounded-md');
+@source not inline('rounded-2xl');
+@source not inline('rounded-3xl');
+@source not inline('rounded-4xl');
+@source not inline('rounded-full');
 
 @source inline('rounded-0');
 @source inline('rounded-sm');
