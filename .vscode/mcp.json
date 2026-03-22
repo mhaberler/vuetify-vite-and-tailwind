@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "vuetify-mcp": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "@vuetify/mcp"]
+    }
+  }
+}
