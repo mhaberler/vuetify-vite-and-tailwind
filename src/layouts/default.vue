@@ -1,7 +1,8 @@
 <template>
-  <v-app-bar flat title="Flight Simulator" />
+  <v-app-bar :collapse="false" flat title="Flight Review" />
 
-  <v-main style="height: calc(100vh - 64px);">
+  <!-- <v-main style="height: calc(100vh - 64px);"> -->
+  <v-main style="height: 0vh;">
     <router-view />
   </v-main>
 </template>

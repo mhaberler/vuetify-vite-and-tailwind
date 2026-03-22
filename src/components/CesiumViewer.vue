@@ -25,7 +25,7 @@
   <vc-viewer
     :access-token="accessToken"
     :animation="false"
-    :base-layer-picker="false"
+    :base-layer-picker="true"
     style="width: 100%; height: 100%;"
     :timeline="false"
     @destroyed="onDestroy"

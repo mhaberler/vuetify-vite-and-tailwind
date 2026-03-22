@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 // Plugins
 import tailwindcss from '@tailwindcss/vite'
 import Vue from '@vitejs/plugin-vue'
+import VueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
 import Fonts from 'unplugin-fonts/vite'
 import Components from 'unplugin-vue-components/vite'
@@ -10,15 +11,22 @@ import VueRouter from 'unplugin-vue-router/vite'
 // Utilities
 import { defineConfig } from 'vite'
 import Cesium from 'vite-plugin-cesium'
-
+import DevtoolsJson from 'vite-plugin-devtools-json'
+import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts-next'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
-    tailwindcss(),
+    Vue({
+      template: { transformAssetUrls },
+    }),
+    VueJsx(),
     Cesium(),
+    tailwindcss(),
+    DevtoolsJson(),
+    ...(mode === 'development' ? [VueDevTools()] : []),
     VueRouter({
       dts: 'src/typed-router.d.ts',
     }),
@@ -39,9 +47,6 @@ export default defineConfig({
     }),
     Components({
       dts: 'src/components.d.ts',
-    }),
-    Vue({
-      template: { transformAssetUrls },
     }),
     // https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin#readme
     Vuetify({
@@ -96,4 +101,4 @@ export default defineConfig({
   server: {
     port: 3000,
   },
-})
+}))
