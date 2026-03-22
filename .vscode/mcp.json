@@ -1,5 +1,10 @@
 {
   "servers": {
+    "cesium-mcp": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "cesium-mcp-runtime"]
+    },
     "vuetify-mcp": {
       "type": "stdio",
       "command": "bunx",
