@@ -1,5 +1,9 @@
 {
   "servers": {
+    "devserver-mcp": {
+      "type": "sse",
+      "url": "http://127.0.0.1:9338/sse"
+    },
     "cesium-mcp": {
       "type": "stdio",
       "command": "bunx",

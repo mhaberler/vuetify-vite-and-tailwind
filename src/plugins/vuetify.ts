@@ -4,13 +4,13 @@
  * Framework documentation: https://vuetifyjs.com`
  */
 
+// Composables
+import { createVuetify } from 'vuetify'
 // Styles
 import '../styles/layers.css'
 import '@mdi/font/css/materialdesignicons.css'
-import 'vuetify/styles'
 
-// Composables
-import { createVuetify } from 'vuetify'
+import 'vuetify/styles'
 
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export default createVuetify({
