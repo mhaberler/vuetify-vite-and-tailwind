@@ -1,5 +1,6 @@
 // Plugins
 import tailwindcss from '@tailwindcss/vite'
+import Cesium from 'vite-plugin-cesium'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import Fonts from 'unplugin-fonts/vite'
@@ -17,6 +18,7 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [
     tailwindcss(),
+    Cesium(),
     VueRouter({
       dts: 'src/typed-router.d.ts',
     }),

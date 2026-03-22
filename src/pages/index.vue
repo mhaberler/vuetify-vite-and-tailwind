@@ -1,5 +1,5 @@
 <template>
-  <HelloWorld />
+  <CesiumViewer />
 </template>
 
 <script lang="ts" setup>

@@ -1,9 +1,9 @@
 <template>
-  <v-main>
+  <v-app-bar title="Flight Simulator" flat />
+
+  <v-main style="height: calc(100vh - 64px);">
     <router-view />
   </v-main>
-
-  <AppFooter />
 </template>
 
 <script lang="ts" setup>
