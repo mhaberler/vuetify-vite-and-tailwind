@@ -18,8 +18,10 @@
     "@fontsource/sometype-mono": "^5.2.7",
     "@macrostrat/cesium-martini": "^1.6.0",
     "@mdi/font": "7.4.47",
+    "@vue-leaflet/vue-leaflet": "^0.10.1",
     "cesium": "^1.139.1",
     "cesium-mcp-bridge": "^1.139.8",
+    "leaflet": "^1.9.4",
     "pinia": "^3.0.4",
     "pmtiles": "^4.4.0",
     "vue": "^3.5.31",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",
     "@tsconfig/node22": "^22.0.5",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^25.5.0",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vitejs/plugin-vue-jsx": "^5.1.5",

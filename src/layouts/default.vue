@@ -2,6 +2,11 @@
   <v-app-bar :collapse="false" flat title="Flight Review">
     <template #append>
       <v-btn
+        :variant="appStore.is3D ? 'tonal' : 'text'"
+        size="small"
+        @click="appStore.is3D = !appStore.is3D"
+      >{{ appStore.is3D ? '3D' : '2D' }}</v-btn>
+      <v-btn
         :color="showGraph ? 'primary' : undefined"
         :icon="showGraph ? 'mdi-chart-line' : 'mdi-chart-line'"
         :variant="showGraph ? 'tonal' : 'text'"
@@ -14,8 +19,8 @@
   <v-main style="height: calc(100vh - 16px);">
     <div
       ref="containerRef"
-      :style="{ userSelect: isDragging ? 'none' : undefined }"
       style="display: flex; flex-direction: column; height: 100%;"
+      :style="{ userSelect: isDragging ? 'none' : undefined }"
     >
       <div :style="{ flex: showGraph ? `0 0 ${topHeightPct}%` : '1', overflow: 'hidden' }">
         <router-view />
@@ -49,24 +54,24 @@
         <div class="text-body-2 mb-1">Terrain error level: {{ settings.terrainErrorLevel }}</div>
         <v-slider
           v-model="settings.terrainErrorLevel"
-          :min="1"
+          class="mb-4"
+          hide-details
           :max="20"
+          :min="1"
           :step="1"
           thumb-label
-          hide-details
-          class="mb-4"
         />
         <v-select
           v-model="settings.imagerySource"
+          class="mb-4"
+          hide-details
           :items="imagerySources"
           label="Imagery source"
-          hide-details
-          class="mb-4"
         />
         <v-switch
           v-model="darkMode"
-          label="Dark mode"
           hide-details
+          label="Dark mode"
         />
       </v-card-text>
       <v-card-actions>
@@ -79,6 +84,9 @@
 
 <script lang="ts" setup>
   import { useTheme } from 'vuetify'
+  import { useAppStore } from '@/stores/app'
+
+  const appStore = useAppStore()
 
   const showGraph = ref(false)
   const settingsOpen = ref(false)
@@ -133,6 +141,8 @@
   const theme = useTheme()
   const darkMode = computed({
     get: () => theme.global.name.value === 'dark',
-    set: (val: boolean) => { theme.global.name.value = val ? 'dark' : 'light' },
+    set: (val: boolean) => {
+      theme.global.name.value = val ? 'dark' : 'light'
+    },
   })
 </script>

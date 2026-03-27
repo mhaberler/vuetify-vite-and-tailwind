@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     VueJsx(),
     Cesium(),
     tailwindcss(),
-    ...(mode === 'development' ? [DevtoolsJson(),VueDevTools()] : []),
+    ...(mode === 'development' ? [DevtoolsJson(), VueDevTools()] : []),
     VueRouter({
       dts: 'src/typed-router.d.ts',
     }),
