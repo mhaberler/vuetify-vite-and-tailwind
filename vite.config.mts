@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => ({
           pinia: ['defineStore', 'storeToRefs'],
         },
       ],
+      exclude: [/\.worker\.[tj]s$/],
       dts: 'src/auto-imports.d.ts',
       eslintrc: {
         enabled: true,
