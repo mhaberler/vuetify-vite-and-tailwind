@@ -1,5 +1,10 @@
 <template>
-  <v-app-bar :collapse="false" flat title="Flight Review">
+  <v-app-bar
+    v-if="showBar"
+    :collapse="false"
+    flat
+    title="Flight Review"
+  >
     <template #append>
       <v-btn
         :icon="appStore.is3D ? 'mdi-map' : 'mdi-earth'"
@@ -13,8 +18,17 @@
       />
       <v-btn icon="mdi-fullscreen" variant="text" @click="toggleFullscreen" />
       <v-btn icon="mdi-cog-outline" variant="text" @click="settingsOpen = true" />
+      <v-btn icon="mdi-chevron-up" variant="text" @click="showBar = false" />
     </template>
   </v-app-bar>
+
+  <v-btn
+    v-show="!showBar"
+    icon="mdi-menu"
+    size="x-small"
+    style="position: fixed; top: 8px; left: 8px; z-index: 1000; opacity: 0.7;"
+    @click="showBar = true"
+  />
 
   <v-main style="height: calc(100vh - 16px);">
     <Splitpanes horizontal style="height: 100%;">
@@ -73,6 +87,7 @@
 
   const appStore = useAppStore()
 
+  const showBar = ref(true)
   const showGraph = ref(false)
   const settingsOpen = ref(false)
 
