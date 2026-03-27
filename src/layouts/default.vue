@@ -2,18 +2,16 @@
   <v-app-bar :collapse="false" flat title="Flight Review">
     <template #append>
       <v-btn
-        :color="appStore.is3D ? 'primary' : undefined"
         :icon="appStore.is3D ? 'mdi-earth' : 'mdi-map'"
-        :variant="appStore.is3D ? 'tonal' : 'text'"
+        variant="text"
         @click="appStore.is3D = !appStore.is3D"
       />
       <v-btn
-        :color="showGraph ? 'primary' : undefined"
-        :icon="showGraph ? 'mdi-chart-line' : 'mdi-chart-line'"
-        :variant="showGraph ? 'tonal' : 'text'"
+        icon="mdi-chart-line"
+        variant="text"
         @click="showGraph = !showGraph"
       />
-      <v-btn icon="mdi-cog-outline" @click="settingsOpen = true" />
+      <v-btn icon="mdi-cog-outline" variant="text" @click="settingsOpen = true" />
     </template>
   </v-app-bar>
 

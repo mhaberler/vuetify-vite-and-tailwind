@@ -12,9 +12,24 @@ import '@mdi/font/css/materialdesignicons.css'
 
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export default createVuetify({
+  defaults: {
+    VBtn: { ripple: false },
+  },
   theme: {
     defaultTheme: 'system',
     utilities: false,
+    themes: {
+      light: {
+        variables: {
+          'hover-opacity': 0,
+        },
+      },
+      dark: {
+        variables: {
+          'hover-opacity': 0,
+        },
+      },
+    },
   },
   display: {
     mobileBreakpoint: 'md',

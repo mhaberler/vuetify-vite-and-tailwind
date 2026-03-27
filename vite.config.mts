@@ -15,9 +15,20 @@ import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts-next'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 
+// Fix for vue-leaflet ES module bug (duplicate 'h' identifier)
+const vueLeafletFix = {
+  name: 'vue-leaflet-fix',
+  transform (code: string, id: string) {
+    if (id.includes('@vue-leaflet/vue-leaflet') && id.includes('.js')) {
+      return code.replace(/\bh\s*=\s*Symbol\(/, 'vleafletSymbol = Symbol(')
+    }
+  },
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
+    vueLeafletFix,
     Vue({
       template: { transformAssetUrls },
     }),
@@ -59,6 +70,7 @@ export default defineConfig(({ mode }) => ({
     exclude: [
       'vuetify',
       'vue-router',
+      'vue-leaflet',
       'unplugin-vue-router/runtime',
       'unplugin-vue-router/data-loaders',
       'unplugin-vue-router/data-loaders/basic',
