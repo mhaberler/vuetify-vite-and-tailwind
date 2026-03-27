@@ -18,7 +18,7 @@
       />
       <v-btn icon="mdi-fullscreen" variant="text" @click="toggleFullscreen" />
       <v-btn icon="mdi-cog-outline" variant="text" @click="settingsOpen = true" />
-      <v-btn icon="mdi-chevron-up" variant="text" @click="showBar = false" />
+      <v-btn icon="mdi-menu" variant="text" @click="showBar = false" />
     </template>
   </v-app-bar>
 
@@ -26,7 +26,7 @@
     v-show="!showBar"
     icon="mdi-menu"
     size="x-small"
-    style="position: fixed; top: 8px; left: 8px; z-index: 1000; opacity: 0.7;"
+    style="position: fixed; top: 8px; right: 8px; z-index: 1000; opacity: 0.7;"
     @click="showBar = true"
   />
 
