@@ -4,7 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import Vue from '@vitejs/plugin-vue'
 import VueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
-import Fonts from 'unplugin-fonts/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VueRouterAutoImports } from 'unplugin-vue-router'
 import VueRouter from 'unplugin-vue-router/vite'
@@ -25,8 +24,7 @@ export default defineConfig(({ mode }) => ({
     VueJsx(),
     Cesium(),
     tailwindcss(),
-    DevtoolsJson(),
-    ...(mode === 'development' ? [VueDevTools()] : []),
+    ...(mode === 'development' ? [DevtoolsJson(),VueDevTools()] : []),
     VueRouter({
       dts: 'src/typed-router.d.ts',
     }),
@@ -54,24 +52,6 @@ export default defineConfig(({ mode }) => ({
       autoImport: true,
       styles: {
         configFile: 'src/styles/settings.scss',
-      },
-    }),
-    Fonts({
-      fontsource: {
-        families: [
-          {
-            name: 'Bricolage Grotesque',
-            weights: [300, 400, 500, 700],
-          },
-          {
-            name: 'Sen',
-            weights: [400, 500, 700],
-          },
-          {
-            name: 'Sometype Mono',
-            weights: [400, 700],
-          },
-        ],
       },
     }),
   ],

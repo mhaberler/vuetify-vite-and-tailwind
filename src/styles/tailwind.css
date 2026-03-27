@@ -3,9 +3,9 @@
 @import "tailwindcss/utilities" layer(tailwind.utilities);
 
 @theme {
-  --font-heading: "Bricolage Grotesque", sans-serif;
-  --font-body: Sen, sans-serif;
-  --font-mono: "Sometype Mono", monospace;
+  --font-heading: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --radius-sm: 2px;
   --radius-lg: 8px;
