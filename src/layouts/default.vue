@@ -16,7 +16,7 @@
         variant="text"
         @click="showGraph = !showGraph"
       />
-      <v-btn icon="mdi-fullscreen" variant="text" @click="toggleFullscreen" />
+      <v-btn v-if="!isIOS" icon="mdi-fullscreen" variant="text" @click="toggleFullscreen" />
       <v-btn icon="mdi-cog-outline" variant="text" @click="settingsOpen = true" />
       <v-btn icon="mdi-menu" variant="text" @click="showBar = false" />
     </template>
@@ -30,7 +30,7 @@
     @click="showBar = true"
   />
 
-  <v-main style="height: calc(100vh - 16px);">
+  <v-main :class="{ 'bar-hidden': !showBar }" style="height: calc(100vh - 16px);">
     <Splitpanes horizontal style="height: 100%;">
       <Pane>
         <router-view />
@@ -87,6 +87,8 @@
 
   const appStore = useAppStore()
 
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+
   const showBar = ref(true)
   const showGraph = ref(false)
   const settingsOpen = ref(false)
@@ -113,3 +115,9 @@
       : document.documentElement.requestFullscreen())
   }
 </script>
+
+<style scoped>
+.bar-hidden :deep(.cesium-viewer-toolbar) {
+  top: 44px;
+}
+</style>

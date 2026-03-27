@@ -1,5 +1,6 @@
 <template>
   <l-map
+    ref="mapRef"
     :center="center"
     style="width: 100%; height: 100%;"
     :use-global-leaflet="false"
@@ -16,7 +17,17 @@
 <script lang="ts" setup>
   import { LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
   import 'leaflet/dist/leaflet.css'
+  import { useAppStore } from '@/stores/app'
 
+  const appStore = useAppStore()
   const zoom = ref(2)
   const center = ref<[number, number]>([20, 0])
+  const mapRef = ref()
+
+  watch(() => appStore.is3D, async (is3D) => {
+    if (!is3D) {
+      await nextTick()
+      mapRef.value?.leafletObject?.invalidateSize()
+    }
+  })
 </script>

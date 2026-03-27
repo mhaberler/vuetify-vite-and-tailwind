@@ -66,10 +66,6 @@
   //   ws.send(JSON.stringify({ id, result }))
   // })
   }
-
-  function onDestroy () {
-  // ws?.close()
-  }
 </script>
 
 <template>
@@ -79,7 +75,6 @@
     :base-layer-picker="true"
     style="width: 100%; height: 100%;"
     :timeline="false"
-    @destroyed="onDestroy"
     @ready="onViewerReady"
   />
 </template>
