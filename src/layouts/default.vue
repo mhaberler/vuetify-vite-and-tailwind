@@ -2,7 +2,7 @@
   <v-app-bar :collapse="false" flat title="Flight Review">
     <template #append>
       <v-btn
-        :icon="appStore.is3D ? 'mdi-earth' : 'mdi-map'"
+        :icon="appStore.is3D ? 'mdi-map' : 'mdi-earth'"
         variant="text"
         @click="appStore.is3D = !appStore.is3D"
       />
@@ -11,6 +11,7 @@
         variant="text"
         @click="showGraph = !showGraph"
       />
+      <v-btn icon="mdi-fullscreen" variant="text" @click="toggleFullscreen" />
       <v-btn icon="mdi-cog-outline" variant="text" @click="settingsOpen = true" />
     </template>
   </v-app-bar>
@@ -90,4 +91,10 @@
       theme.global.name.value = val ? 'dark' : 'light'
     },
   })
+
+  async function toggleFullscreen () {
+    await (document.fullscreenElement
+      ? document.exitFullscreen()
+      : document.documentElement.requestFullscreen())
+  }
 </script>
