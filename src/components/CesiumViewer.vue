@@ -61,7 +61,6 @@
         decoder: terrainDecoder,
       })
 
-      // viewer.baseLayerPicker.viewModel.imageryProviderViewModels.push(versatiles)
       viewer.baseLayerPicker.viewModel.terrainProviderViewModels.push(new Cesium.ProviderViewModel({
         name: 'Mapterhorn Terrarium',
         tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',

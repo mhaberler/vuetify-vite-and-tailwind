@@ -6,18 +6,43 @@
     :use-global-leaflet="false"
     :zoom="zoom"
   >
+    <l-control-layers />
     <l-tile-layer
-      attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+      v-for="(layer, key) in BASEMAPS"
+      :key="key"
+      :attribution="layer.attr"
       layer-type="base"
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      :max-zoom="layer.maxZoom"
+      :name="layer.name"
+      :url="layer.url"
+      :visible="key === 'osm'"
     />
   </l-map>
 </template>
 
 <script lang="ts" setup>
-  import { LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
+  import { LControlLayers, LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
   import { useAppStore } from '@/stores/app'
   import 'leaflet/dist/leaflet.css'
+
+  const BASEMAPS = {
+    osm: {
+      name: 'OpenStreetMap', url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+      attr: '&copy; OpenStreetMap contributors', maxZoom: 19,
+    },
+    topo: {
+      name: 'OpenTopoMap', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attr: '&copy; OpenTopoMap contributors', maxZoom: 17,
+    },
+    austria: {
+      name: 'Austria Map', url: 'https://mapsneu.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png',
+      attr: '&copy; basemap.at', maxZoom: 20,
+    },
+    ortho: {
+      name: 'Austria Orthophoto', url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
+      attr: '&copy; basemap.at', maxZoom: 20,
+    },
+  }
 
   const appStore = useAppStore()
   const zoom = ref(2)
