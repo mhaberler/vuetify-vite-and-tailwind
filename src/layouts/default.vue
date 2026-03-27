@@ -23,15 +23,16 @@
 
       <div
         v-if="showGraph"
-        style="flex: 0 0 5px; cursor: ns-resize; display: flex; align-items: center; justify-content: center; background: rgb(var(--v-theme-surface));"
+        style="flex: 0 0 10px; cursor: ns-resize; display: flex; align-items: center; justify-content: center; background: rgb(var(--v-theme-surface)); touch-action: none;"
         @mousedown="onSeparatorMousedown"
+        @touchstart.passive="onSeparatorTouchstart"
       >
         <div style="width: 32px; height: 3px; border-radius: 2px; background: currentColor; opacity: 0.3;" />
       </div>
 
       <div
         v-if="showGraph"
-        :style="{ flex: `0 0 calc(${100 - topHeightPct}% - 5px)`, overflow: 'hidden', background: 'rgb(var(--v-theme-surface))' }"
+        :style="{ flex: `0 0 calc(${100 - topHeightPct}% - 10px)`, overflow: 'hidden', background: 'rgb(var(--v-theme-surface))' }"
       />
     </div>
   </v-main>
@@ -85,17 +86,18 @@
   const isDragging = ref(false)
   const containerRef = ref<HTMLElement>()
 
+  function updateTopHeight (clientY: number) {
+    if (!containerRef.value) return
+    const rect = containerRef.value.getBoundingClientRect()
+    const pct = ((clientY - rect.top) / rect.height) * 100
+    topHeightPct.value = Math.max(10, Math.min(90, pct))
+  }
+
   function onSeparatorMousedown (e: MouseEvent) {
     isDragging.value = true
     e.preventDefault()
 
-    const onMousemove = (ev: MouseEvent) => {
-      if (!containerRef.value) return
-      const rect = containerRef.value.getBoundingClientRect()
-      const pct = ((ev.clientY - rect.top) / rect.height) * 100
-      topHeightPct.value = Math.max(10, Math.min(90, pct))
-    }
-
+    const onMousemove = (ev: MouseEvent) => updateTopHeight(ev.clientY)
     const onMouseup = () => {
       isDragging.value = false
       document.removeEventListener('mousemove', onMousemove)
@@ -104,6 +106,20 @@
 
     document.addEventListener('mousemove', onMousemove)
     document.addEventListener('mouseup', onMouseup)
+  }
+
+  function onSeparatorTouchstart (e: TouchEvent) {
+    isDragging.value = true
+
+    const onTouchmove = (ev: TouchEvent) => updateTopHeight(ev.touches[0].clientY)
+    const onTouchend = () => {
+      isDragging.value = false
+      document.removeEventListener('touchmove', onTouchmove)
+      document.removeEventListener('touchend', onTouchend)
+    }
+
+    document.addEventListener('touchmove', onTouchmove, { passive: true })
+    document.addEventListener('touchend', onTouchend)
   }
 
   const settings = reactive({
