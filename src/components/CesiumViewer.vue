@@ -5,12 +5,23 @@
   // import { CesiumBridge } from 'cesium-mcp-bridge'
 
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
+  import NorthArrow from './NorthArrow.vue'
 
   const accessToken = import.meta.env.VITE_CESIUM_ION_TOKEN as string
+  const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   // let ws: WebSocket
 
   function onViewerReady ({ viewer }: VcReadyObject) {
     // const bridge = new CesiumBridge(viewer)
+
+    // Tune camera controller for better touch/trackpad interaction
+    const controller = viewer.scene.screenSpaceCameraController
+    controller.enableTilt = true
+    controller.enableLook = true
+    controller.inertiaSpin = 0.1
+    controller.inertiaTranslate = 0.1
+
+    viewerRef.value = viewer
 
     if (viewer.baseLayerPicker) {
       const versatiles = new Cesium.ProviderViewModel({
@@ -69,12 +80,15 @@
 </script>
 
 <template>
-  <vc-viewer
-    :access-token="accessToken"
-    :animation="false"
-    :base-layer-picker="true"
-    style="width: 100%; height: 100%;"
-    :timeline="false"
-    @ready="onViewerReady"
-  />
+  <div style="position: relative; width: 100%; height: 100%;">
+    <vc-viewer
+      :access-token="accessToken"
+      :animation="false"
+      :base-layer-picker="true"
+      style="width: 100%; height: 100%;"
+      :timeline="false"
+      @ready="onViewerReady"
+    />
+    <NorthArrow v-if="viewerRef" :viewer="viewerRef" />
+  </div>
 </template>
