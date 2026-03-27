@@ -70,6 +70,32 @@
           hide-details
           label="Dark mode"
         />
+        <v-divider class="my-4" />
+        <div class="text-subtitle-2 mb-2">Cesium Ion Token</div>
+        <v-text-field
+          v-model="cesiumTokenInput"
+          :append-inner-icon="showTokenText ? 'mdi-eye-off' : 'mdi-eye'"
+          clearable
+          density="compact"
+          hint="Leave empty to use the default token"
+          label="Access Token"
+          persistent-hint
+          :type="showTokenText ? 'text' : 'password'"
+          @click:append-inner="showTokenText = !showTokenText"
+          @click:clear="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
+        />
+        <v-btn
+          class="mt-2"
+          color="primary"
+          :disabled="!cesiumTokenInput || cesiumTokenInput === cesiumTokenStore.token"
+          size="small"
+          @click="cesiumTokenStore.setToken(cesiumTokenInput)"
+        >
+          Save Token
+        </v-btn>
+        <div v-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
+          Using custom token (saved in cookie)
+        </div>
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -83,9 +109,13 @@
   import { Pane, Splitpanes } from 'splitpanes'
   import { useTheme } from 'vuetify'
   import { useAppStore } from '@/stores/app'
+  import { useCesiumTokenStore } from '@/stores/cesiumToken'
   import 'splitpanes/dist/splitpanes.css'
 
   const appStore = useAppStore()
+  const cesiumTokenStore = useCesiumTokenStore()
+  const cesiumTokenInput = ref(cesiumTokenStore.token)
+  const showTokenText = ref(false)
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
 

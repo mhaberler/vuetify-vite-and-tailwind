@@ -6,8 +6,9 @@
 
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
   import NorthArrow from './NorthArrow.vue'
+  import { useCesiumToken } from '@/composables/useCesiumToken'
 
-  const accessToken = import.meta.env.VITE_CESIUM_ION_TOKEN as string
+  const { token: accessToken } = useCesiumToken()
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   // let ws: WebSocket
 
