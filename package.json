@@ -35,7 +35,6 @@
     "eslint": "^10.1.0",
     "eslint-config-vuetify": "^4.4.0",
     "npm-run-all2": "^8.0.4",
-    "sass-embedded": "^1.98.0",
     "tailwindcss": "^4.2.2",
     "typescript": "~6.0.2",
     "unplugin-auto-import": "^21.0.0",
