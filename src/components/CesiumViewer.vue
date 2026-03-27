@@ -1,13 +1,13 @@
 <script setup lang="ts">
   import * as Cesium from 'cesium'
   import type { VcReadyObject } from 'vue-cesium/es/utils/types'
-  import { CesiumBridge } from 'cesium-mcp-bridge'
+  // import { CesiumBridge } from 'cesium-mcp-bridge'
 
   const accessToken = import.meta.env.VITE_CESIUM_ION_TOKEN as string
   let ws: WebSocket
 
   function onViewerReady ({ viewer }: VcReadyObject) {
-    const bridge = new CesiumBridge(viewer)
+    // const bridge = new CesiumBridge(viewer)
 
     if (viewer.baseLayerPicker) {
       const versatiles = new Cesium.ProviderViewModel({
@@ -23,16 +23,16 @@
       viewer.baseLayerPicker.viewModel.imageryProviderViewModels.push(versatiles)
     }
 
-    ws = new WebSocket('ws://localhost:9100?session=default')
-    ws.addEventListener('message', async event => {
-      const { id, method, params } = JSON.parse(event.data)
-      const result = await bridge.execute({ action: method, params })
-      ws.send(JSON.stringify({ id, result }))
-    })
+    // ws = new WebSocket('ws://localhost:9100?session=default')
+    // ws.addEventListener('message', async event => {
+    //   const { id, method, params } = JSON.parse(event.data)
+    //   const result = await bridge.execute({ action: method, params })
+    //   ws.send(JSON.stringify({ id, result }))
+    // })
   }
 
   function onDestroy () {
-    ws?.close()
+    // ws?.close()
   }
 </script>
 
