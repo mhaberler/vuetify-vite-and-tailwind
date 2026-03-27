@@ -6,4 +6,15 @@
   .v-btn__overlay {
     opacity: 0 !important;
   }
+
+  .splitpanes--horizontal > .splitpanes__splitter {
+    height: 4px;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -20px 0;
+    }
+  }
 }
