@@ -9,9 +9,9 @@ import type { App } from 'vue'
 import VueCesium from 'vue-cesium'
 import router from '../router'
 import pinia from '../stores'
+import { useCesiumTokenStore } from '../stores/cesiumToken'
 // Plugins
 import vuetify from './vuetify'
-import { useCesiumTokenStore } from '../stores/cesiumToken'
 
 import 'vue-cesium/dist/index.css'
 

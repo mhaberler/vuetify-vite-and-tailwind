@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
-import Cookies from 'js-cookie'
 import { Ion } from 'cesium'
+import Cookies from 'js-cookie'
+import { defineStore } from 'pinia'
 
 const COOKIE_KEY = 'cesium_ion_token'
 const COOKIE_EXPIRY_DAYS = 365
@@ -10,7 +10,7 @@ export const useCesiumTokenStore = defineStore('cesiumToken', {
     token: Cookies.get(COOKIE_KEY) || import.meta.env.VITE_CESIUM_ION_TOKEN as string || '',
   }),
   getters: {
-    hasToken: (state) => !!state.token,
+    hasToken: state => !!state.token,
     isCustomToken: () => !!Cookies.get(COOKIE_KEY),
   },
   actions: {

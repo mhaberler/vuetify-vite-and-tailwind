@@ -2,11 +2,11 @@
   import type { VcReadyObject } from 'vue-cesium/es/utils/types'
   import { MartiniTerrainProvider, WorkerFarmTerrainDecoder } from '@macrostrat/cesium-martini'
   import * as Cesium from 'cesium'
+  import enUS from 'vue-cesium/es/locale/lang/en-us'
   // import { CesiumBridge } from 'cesium-mcp-bridge'
-
+  import { useCesiumToken } from '@/composables/useCesiumToken'
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
   import NorthArrow from './NorthArrow.vue'
-  import { useCesiumToken } from '@/composables/useCesiumToken'
 
   const { token: accessToken } = useCesiumToken()
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
@@ -25,17 +25,38 @@
     viewerRef.value = viewer
 
     if (viewer.baseLayerPicker) {
-      const versatiles = new Cesium.ProviderViewModel({
-        name: 'VersaTiles Satellite',
-        tooltip: 'Copernicus Sentinel-2 satellite imagery via VersaTiles (free, no auth)',
-        iconUrl: '/versatiles-logo.png',
-        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
-          url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
-          maximumLevel: 12,
-          credit: new Cesium.Credit('Copernicus Sentinel-2 via VersaTiles', true),
+      viewer.baseLayerPicker.viewModel.imageryProviderViewModels.push(
+        new Cesium.ProviderViewModel({
+          name: 'VersaTiles Satellite',
+          tooltip: 'Copernicus Sentinel-2 satellite imagery via VersaTiles (free, no auth)',
+          iconUrl: '/versatiles-logo.png',
+          creationFunction: () => new Cesium.UrlTemplateImageryProvider({
+            url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
+            maximumLevel: 12,
+            credit: new Cesium.Credit('Copernicus Sentinel-2 via VersaTiles', true),
+          }),
         }),
-      })
-      viewer.baseLayerPicker.viewModel.imageryProviderViewModels.push(versatiles)
+        new Cesium.ProviderViewModel({
+          name: 'Austria Basemap',
+          iconUrl: 'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
+          tooltip: 'Austrian OGD Basemap.\nhttps://www.basemap.at/index_en.html',
+          creationFunction () {
+            return new Cesium.WebMapTileServiceImageryProvider({
+              url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg',
+              layer: 'bmaporthofoto30cm',
+              style: 'normal',
+              format: 'image/jpeg',
+              tileMatrixSetID: 'google3857',
+              subdomains: '1234',
+              maximumLevel: 19,
+              rectangle: Cesium.Rectangle.fromDegrees(8.782_379, 46.358_77, 17.5, 49.037_872),
+              credit: new Cesium.Credit(
+                '<a href="https://www.basemap.at/" target="_blank">Datenquelle: basemap.at</a>',
+                true,
+              ),
+            })
+          },
+        }))
 
       const terrariumWorker = new Worker(
         new URL('terrarium.worker.ts', import.meta.url),
@@ -81,14 +102,18 @@
 
 <template>
   <div style="position: relative; width: 100%; height: 100%;">
-    <vc-viewer
-      :access-token="accessToken"
-      :animation="false"
-      :base-layer-picker="true"
-      style="width: 100%; height: 100%;"
-      :timeline="false"
-      @ready="onViewerReady"
-    />
-    <NorthArrow v-if="viewerRef" :viewer="viewerRef" />
+    <vc-config-provider :locale="enUS">
+
+      <vc-viewer
+        :access-token="accessToken"
+        :animation="true"
+        :base-layer-picker="true"
+        style="width: 100%; height: 100%;"
+        :timeline="true"
+        @ready="onViewerReady"
+      />
+      <NorthArrow v-if="viewerRef" :viewer="viewerRef" />
+    </vc-config-provider>
+
   </div>
 </template>
