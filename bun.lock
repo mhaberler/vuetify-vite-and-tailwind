@@ -21,6 +21,8 @@
         "pmtiles": "^4.4.0",
         "sass-embedded": "^1.98.0",
         "splitpanes": "^4.0.4",
+        "uplot": "^1.6.32",
+        "uplot-vue": "^1.2.4",
         "vue": "^3.5.31",
         "vue-cesium": "^3.2.12",
         "vue-router": "^5.0.4",
@@ -1224,6 +1226,10 @@
     "upath": ["upath@2.0.1", "", {}, "sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w=="],
 
     "update-browserslist-db": ["update-browserslist-db@1.2.3", "", { "dependencies": { "escalade": "3.2.0", "picocolors": "1.1.1" }, "peerDependencies": { "browserslist": "4.28.1" }, "bin": { "update-browserslist-db": "cli.js" } }, "sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w=="],
+
+    "uplot": ["uplot@1.6.32", "", {}, "sha512-KIMVnG68zvu5XXUbC4LQEPnhwOxBuLyW1AHtpm6IKTXImkbLgkMy+jabjLgSLMasNuGGzQm/ep3tOkyTxpiQIw=="],
+
+    "uplot-vue": ["uplot-vue@1.2.4", "", { "peerDependencies": { "uplot": "^1.6.32" } }, "sha512-zcM5zCrCqryVu5qS5Crk9CulFBHH/m//pFlo+0yb1ivDW7mMsEQc8fFnRal/9qC+/ArWE66EDYf+oxlQDf1F3Q=="],
 
     "uri-js": ["uri-js@4.4.1", "", { "dependencies": { "punycode": "2.3.1" } }, "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg=="],
 

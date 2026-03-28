@@ -35,7 +35,9 @@
       <Pane>
         <router-view />
       </Pane>
-      <Pane v-if="showGraph" min-size="10" :size="50" style="background: rgb(var(--v-theme-surface));" />
+      <Pane v-if="showGraph" min-size="10" :size="50" style="background: rgb(var(--v-theme-surface));">
+        <TimeSeries />
+      </Pane>
     </Splitpanes>
   </v-main>
 
@@ -108,6 +110,7 @@
 <script lang="ts" setup>
   import { Pane, Splitpanes } from 'splitpanes'
   import { useTheme } from 'vuetify'
+  import TimeSeries from '@/components/TimeSeries.vue'
   import { useAppStore } from '@/stores/app'
   import { useCesiumTokenStore } from '@/stores/cesiumToken'
   import 'splitpanes/dist/splitpanes.css'
