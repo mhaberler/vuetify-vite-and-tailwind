@@ -37,6 +37,20 @@
           }),
         }),
         new Cesium.ProviderViewModel({
+          name: 'SWISSIMAGE',
+          tooltip: 'swisstopo SWISSIMAGE — high-res Swiss orthophotos (10 cm / 25 cm)',
+          iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
+          creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
+            url: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{TileMatrix}/{TileCol}/{TileRow}.jpeg',
+            layer: 'ch.swisstopo.swissimage',
+            style: 'default',
+            format: 'image/jpeg',
+            tileMatrixSetID: '3857',
+            maximumLevel: 20,
+            credit: new Cesium.Credit('© <a href="https://www.swisstopo.admin.ch/" target="_blank">swisstopo</a>', true),
+          }),
+        }),
+        new Cesium.ProviderViewModel({
           name: 'Austria Basemap',
           iconUrl: 'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
           tooltip: 'Austrian OGD Basemap.\nhttps://www.basemap.at/index_en.html',
@@ -83,12 +97,23 @@
         decoder: terrainDecoder,
       })
 
-      viewer.baseLayerPicker.viewModel.terrainProviderViewModels.push(new Cesium.ProviderViewModel({
-        name: 'Mapterhorn Terrarium',
-        tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
-        iconUrl: '/mapterhorn-icon.png',
-        creationFunction: () => terrainProvider,
-      }))
+      viewer.baseLayerPicker.viewModel.terrainProviderViewModels.push(
+        new Cesium.ProviderViewModel({
+          name: 'swisstopo Terrain',
+          tooltip: 'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
+          iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
+          creationFunction: () => Cesium.CesiumTerrainProvider.fromUrl(
+            'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
+            { requestVertexNormals: true },
+          ),
+        }),
+        new Cesium.ProviderViewModel({
+          name: 'Mapterhorn Terrarium',
+          tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
+          iconUrl: '/mapterhorn-icon.png',
+          creationFunction: () => terrainProvider,
+        }),
+      )
     }
 
   // ws = new WebSocket('ws://localhost:9100?session=default')
