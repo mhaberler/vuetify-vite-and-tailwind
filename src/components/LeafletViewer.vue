@@ -34,10 +34,6 @@
       name: 'OpenTopoMap', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
       attr: '&copy; OpenTopoMap contributors', maxZoom: 17,
     },
-    austria: {
-      name: 'Austria Map', url: 'https://mapsneu.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png',
-      attr: '&copy; basemap.at', maxZoom: 17,
-    },
     ortho: {
       name: 'Austria Orthophoto', url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
       attr: '&copy; basemap.at', maxZoom: 18,
