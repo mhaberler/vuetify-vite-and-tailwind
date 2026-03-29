@@ -44,27 +44,7 @@
   <v-dialog v-model="settingsOpen" max-width="480">
     <v-card title="Settings">
       <v-card-text>
-        <v-switch
-          v-model="settings.showTerrain"
-          class="mb-4"
-          hide-details
-          label="Show terrain"
-        />
-        <div class="text-body-2 mb-1">Terrain error level: {{ settings.terrainErrorLevel }}</div>
-        <v-slider
-          v-model="settings.terrainErrorLevel"
-          class="mb-4"
-          hide-details
-          :max="20"
-          :min="1"
-          :step="1"
-          thumb-label
-        />
-        <v-switch
-          v-model="darkMode"
-          hide-details
-          label="Dark mode"
-        />
+
         <v-divider class="my-4" />
         <div class="text-subtitle-2 mb-2">API Keys</div>
         <div class="text-caption font-weight-medium mb-1">Cesium Ion Token</div>
@@ -133,6 +113,12 @@
         <div v-if="settingsStore.bingMapsKey" class="text-caption mt-1 text-medium-emphasis">
           Custom Bing key saved
         </div>
+
+        <v-switch
+          v-model="darkMode"
+          hide-details
+          label="Dark mode"
+        />
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -183,11 +169,6 @@
   const showBar = ref(true)
   const showGraph = ref(false)
   const settingsOpen = ref(false)
-
-  const settings = reactive({
-    showTerrain: true,
-    terrainErrorLevel: 8,
-  })
 
   const theme = useTheme()
   const darkMode = computed({
