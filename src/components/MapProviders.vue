@@ -129,7 +129,7 @@
     // vite-bundled Cesium's ImageryLayer causes WebGL context incompatibility
     // (context.maximumTextureSize = 0) when the two instances intersect during texture
     // creation. Access lazily — the CDN script may not be loaded during setup().
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const CesiumGlobal = (window as any).Cesium
     try {
       // Add new layer first, then remove old — avoids destroying an actively-loading
@@ -169,16 +169,16 @@
 
 <template>
   <div class="map-switcher">
-    <v-card elevation="2" rounded="lg" class="pa-2" min-width="180">
+    <v-card class="pa-2" elevation="2" min-width="180" rounded="lg">
 
       <div class="text-caption font-weight-bold mb-1">Imagery</div>
       <v-menu>
         <template #activator="{ props: menuProps }">
-          <v-btn v-bind="menuProps" size="small" variant="tonal" block>
+          <v-btn v-bind="menuProps" block size="small" variant="tonal">
             <v-avatar
               v-if="activeImageryVM.iconUrl"
-              :image="activeImageryVM.iconUrl"
               class="mr-1"
+              :image="activeImageryVM.iconUrl"
               size="16"
             />
             {{ activeImageryVM.name }}
@@ -200,11 +200,11 @@
       <div class="text-caption font-weight-bold mt-3 mb-1">Terrain</div>
       <v-menu>
         <template #activator="{ props: menuProps }">
-          <v-btn v-bind="menuProps" size="small" variant="tonal" block>
+          <v-btn v-bind="menuProps" block size="small" variant="tonal">
             <v-avatar
               v-if="activeTerrainVM.iconUrl"
-              :image="activeTerrainVM.iconUrl"
               class="mr-1"
+              :image="activeTerrainVM.iconUrl"
               size="16"
             />
             {{ activeTerrainVM.name }}

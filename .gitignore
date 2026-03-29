@@ -30,3 +30,6 @@ typed-router.d.ts
 .env.development
 
 .claude/settings.local.json
+
+.vscode/*
+

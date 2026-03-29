@@ -5,7 +5,9 @@ const LS_KEY = 'app_settings'
 function loadSettings () {
   try {
     return JSON.parse(localStorage.getItem(LS_KEY) ?? '{}')
-  } catch { return {} }
+  } catch {
+    return {}
+  }
 }
 
 export const useSettingsStore = defineStore('settings', {

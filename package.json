@@ -9,7 +9,10 @@
     "preview": "vite preview --host",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "prettier": "prettier --write --no-config \"**/*\"",
+    "prettier-check": "prettier --check --no-config \"**/*\"",
+    "clean": "bunx rimraf ./dist"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.2.10",
@@ -26,6 +29,7 @@
     "leaflet": "^1.9.4",
     "pinia": "^3.0.4",
     "pmtiles": "^4.4.0",
+    "prettier": "^3.8.1",
     "sass-embedded": "^1.98.0",
     "splitpanes": "^4.0.4",
     "uplot": "^1.6.32",

@@ -21,9 +21,8 @@
     tileSize: 512,
     maxZoom: 12,
   })
-  // @ts-ignore
+
   const terrainDecoder = new WorkerFarmTerrainDecoder({ worker: terrariumWorker })
-  // @ts-ignore
   const martiniTerrainProvider = markRaw(new MartiniTerrainProvider({
     resource: terrainResource,
     decoder: terrainDecoder,
