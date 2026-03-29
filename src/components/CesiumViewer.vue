@@ -4,11 +4,14 @@
   import * as Cesium from 'cesium'
   import enUS from 'vue-cesium/es/locale/lang/en-us'
   import { useCesiumToken } from '@/composables/useCesiumToken'
+  import { useSettingsStore } from '@/stores/settings'
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
   import NorthArrow from './NorthArrow.vue'
 
   const { token: accessToken, hasToken } = useCesiumToken()
+  const settingsStore = useSettingsStore()
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
+  const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
 
   // Hoist Mapterhorn construction to setup scope so it can be passed as a prop.
   // markRaw prevents Vue from proxying the Cesium object.
@@ -145,6 +148,32 @@
       vm.selectedTerrain = vm.terrainProviderViewModels[1]
     }
   }
+
+  async function loadBuildings (viewer: Cesium.Viewer) {
+    buildingsTileset.value = await Cesium.createOsmBuildingsAsync()
+    viewer.scene.primitives.add(buildingsTileset.value)
+  }
+
+  function unloadBuildings (viewer: Cesium.Viewer) {
+    if (buildingsTileset.value) {
+      viewer.scene.primitives.remove(buildingsTileset.value)
+      buildingsTileset.value = null
+    }
+  }
+
+  watch(() => settingsStore.show3DBuildings, enabled => {
+    if (!viewerRef.value) return
+    if (enabled) loadBuildings(viewerRef.value)
+    else unloadBuildings(viewerRef.value)
+  })
+
+  function zoomIn () {
+    viewerRef.value?.camera.zoomIn(viewerRef.value.camera.positionCartographic.height * 0.4)
+  }
+
+  function zoomOut () {
+    viewerRef.value?.camera.zoomOut(viewerRef.value.camera.positionCartographic.height * 0.6)
+  }
 </script>
 
 <template>
@@ -158,7 +187,14 @@
         :timeline="true"
         @ready="onViewerReady"
       />
-      <NorthArrow v-if="viewerRef" :viewer="viewerRef" />
+      <NorthArrow v-if="viewerRef && settingsStore.showNorth" :viewer="viewerRef" />
     </vc-config-provider>
+    <div
+      v-if="settingsStore.showZoom"
+      style="position: absolute; bottom: 180px; right: 12px; display: flex; flex-direction: column; gap: 20px;"
+    >
+      <v-btn density="compact" icon="mdi-plus" size="large" @click="zoomIn" />
+      <v-btn density="compact" icon="mdi-minus" size="large" @click="zoomOut" />
+    </div>
   </div>
 </template>

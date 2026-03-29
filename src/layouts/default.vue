@@ -114,6 +114,26 @@
           Custom Bing key saved
         </div>
 
+        <div class="text-subtitle-2 mb-2">Viewer Controls</div>
+        <v-switch
+          v-model="settingsStore.showZoom"
+          hide-details
+          label="Zoom buttons"
+          @update:model-value="settingsStore.save()"
+        />
+        <v-switch
+          v-model="settingsStore.showNorth"
+          hide-details
+          label="North arrow"
+          @update:model-value="settingsStore.save()"
+        />
+        <v-switch
+          v-model="settingsStore.show3DBuildings"
+          class="mb-4"
+          hide-details
+          label="3D Buildings"
+          @update:model-value="settingsStore.save()"
+        />
         <v-switch
           v-model="darkMode"
           hide-details
