@@ -1,4 +1,11 @@
 @layer vuetify-overrides {
+  html,
+  body,
+  #app,
+  .v-application {
+    font-family: var(--font-body);
+  }
+
   code, pre, .v-code {
     font-family: var(--font-mono);
   }
