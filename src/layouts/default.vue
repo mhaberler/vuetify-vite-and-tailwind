@@ -60,20 +60,21 @@
           :step="1"
           thumb-label
         />
-        <v-select
-          v-model="settings.imagerySource"
-          class="mb-4"
-          hide-details
-          :items="imagerySources"
-          label="Imagery source"
-        />
         <v-switch
           v-model="darkMode"
           hide-details
           label="Dark mode"
         />
+        <v-switch
+          v-model="settingsStore.useCustomLayerSwitcher"
+          class="mt-2"
+          hide-details
+          label="Custom layer switcher"
+          @update:model-value="settingsStore.save()"
+        />
         <v-divider class="my-4" />
-        <div class="text-subtitle-2 mb-2">Cesium Ion Token</div>
+        <div class="text-subtitle-2 mb-2">API Keys</div>
+        <div class="text-caption font-weight-medium mb-1">Cesium Ion Token</div>
         <v-text-field
           v-model="cesiumTokenInput"
           :append-inner-icon="showTokenText ? 'mdi-eye-off' : 'mdi-eye'"
@@ -98,6 +99,33 @@
         <div v-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
           Using custom token (saved in cookie)
         </div>
+
+        <div class="text-caption font-weight-medium mb-1 mt-4">
+          Bing Maps Key
+          <span class="font-italic text-medium-emphasis"> — optional, Bing layers work via Ion without this</span>
+        </div>
+        <v-text-field
+          v-model="bingKeyInput"
+          :append-inner-icon="showBingKey ? 'mdi-eye-off' : 'mdi-eye'"
+          clearable
+          density="compact"
+          label="Bing Maps Key"
+          :type="showBingKey ? 'text' : 'password'"
+          @click:append-inner="showBingKey = !showBingKey"
+          @click:clear="settingsStore.bingMapsKey = ''; settingsStore.save()"
+        />
+        <v-btn
+          class="mt-2"
+          color="primary"
+          :disabled="!bingKeyInput || bingKeyInput === settingsStore.bingMapsKey"
+          size="small"
+          @click="settingsStore.bingMapsKey = bingKeyInput; settingsStore.save()"
+        >
+          Save Key
+        </v-btn>
+        <div v-if="settingsStore.bingMapsKey" class="text-caption mt-1 text-medium-emphasis">
+          Custom Bing key saved
+        </div>
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -113,12 +141,16 @@
   import TimeSeries from '@/components/TimeSeries.vue'
   import { useAppStore } from '@/stores/app'
   import { useCesiumTokenStore } from '@/stores/cesiumToken'
+  import { useSettingsStore } from '@/stores/settings'
   import 'splitpanes/dist/splitpanes.css'
 
   const appStore = useAppStore()
   const cesiumTokenStore = useCesiumTokenStore()
+  const settingsStore = useSettingsStore()
   const cesiumTokenInput = ref(cesiumTokenStore.token)
   const showTokenText = ref(false)
+  const bingKeyInput = ref(settingsStore.bingMapsKey)
+  const showBingKey = ref(false)
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
 
@@ -129,10 +161,7 @@
   const settings = reactive({
     showTerrain: true,
     terrainErrorLevel: 8,
-    imagerySource: 'VersaTiles Satellite',
   })
-
-  const imagerySources = ['VersaTiles Satellite']
 
   const theme = useTheme()
   const darkMode = computed({

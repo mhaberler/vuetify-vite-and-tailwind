@@ -3,19 +3,38 @@
   import { MartiniTerrainProvider, WorkerFarmTerrainDecoder } from '@macrostrat/cesium-martini'
   import * as Cesium from 'cesium'
   import enUS from 'vue-cesium/es/locale/lang/en-us'
-  // import { CesiumBridge } from 'cesium-mcp-bridge'
   import { useCesiumToken } from '@/composables/useCesiumToken'
+  import { useSettingsStore } from '@/stores/settings'
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
+  import MapProviders from './MapProviders.vue'
   import NorthArrow from './NorthArrow.vue'
 
   const { token: accessToken } = useCesiumToken()
+  const settingsStore = useSettingsStore()
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
-  // let ws: WebSocket
+
+  // Hoist Mapterhorn construction to setup scope so it can be passed as a prop.
+  // markRaw prevents Vue from proxying the Cesium object.
+  const terrariumWorker = new Worker(
+    new URL('terrarium.worker.ts', import.meta.url),
+    { type: 'module' },
+  )
+  const terrainResource = new PMTilesHeightmapResource({
+    url: 'https://download.mapterhorn.com/planet.pmtiles',
+    tileSize: 512,
+    maxZoom: 12,
+  })
+  // @ts-ignore
+  const terrainDecoder = new WorkerFarmTerrainDecoder({ worker: terrariumWorker })
+  // @ts-ignore
+  const martiniTerrainProvider = markRaw(new MartiniTerrainProvider({
+    resource: terrainResource,
+    decoder: terrainDecoder,
+  }))
+
+  onUnmounted(() => terrariumWorker.terminate())
 
   function onViewerReady ({ viewer }: VcReadyObject) {
-    // const bridge = new CesiumBridge(viewer)
-
-    // Tune camera controller for better touch/trackpad interaction
     const controller = viewer.scene.screenSpaceCameraController
     controller.enableTilt = true
     controller.enableLook = true
@@ -24,9 +43,9 @@
 
     viewerRef.value = viewer
 
+    // When the built-in picker is active, register custom providers into it
     if (viewer.baseLayerPicker) {
       viewer.baseLayerPicker.viewModel.imageryProviderViewModels.push(
-
         new Cesium.ProviderViewModel({
           name: 'VersaTiles Satellite',
           tooltip: 'Global Sentinel-2 imagery (No stretching)',
@@ -42,28 +61,26 @@
           name: 'France IGN Orthophoto',
           tooltip: 'IGN BD ORTHO — 20 cm',
           iconUrl: 'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
-          creationFunction: () => {
-            return new Cesium.WebMapTileServiceImageryProvider({
-              url: 'https://data.geopf.fr/wmts',
-              layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-              style: 'normal',
-              format: 'image/jpeg',
-              tileMatrixSetID: 'PM',
-              maximumLevel: 19,
-              tilingScheme: new Cesium.WebMercatorTilingScheme(),
-              rectangle: Cesium.Rectangle.fromDegrees(-5.5, 41.3, 9.6, 51.1),
-              credit: new Cesium.Credit('© <a href="https://geopf.fr" target="_blank">IGN France</a>', true),
-            })
-          },
+          creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
+            url: 'https://data.geopf.fr/wmts',
+            layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
+            style: 'normal',
+            format: 'image/jpeg',
+            tileMatrixSetID: 'PM',
+            maximumLevel: 19,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            rectangle: Cesium.Rectangle.fromDegrees(-5.5, 41.3, 9.6, 51.1),
+            credit: new Cesium.Credit('© <a href="https://geopf.fr" target="_blank">IGN France</a>', true),
+          }),
         }),
         new Cesium.ProviderViewModel({
           name: 'Karte Tirol Orthofoto',
           tooltip: 'Tirol Orthophoto',
           iconUrl: 'https://www.tirol.gv.at/favicon.ico',
           creationFunction: () => new Cesium.UrlTemplateImageryProvider({
-            url: 'https://wmts.kartetirol.at/wmts/gdi_ortho/{z}/{x}/{y}.png', // adjust layer/path
+            url: 'https://wmts.kartetirol.at/wmts/gdi_ortho/{z}/{x}/{y}.png',
             tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            maximumLevel: 18, // check capabilities
+            maximumLevel: 18,
           }),
         }),
         new Cesium.ProviderViewModel({
@@ -71,7 +88,6 @@
           tooltip: 'swisstopo SWISSIMAGE (10 cm / 25 cm)',
           iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
           creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
-            // Fixed URL placeholders
             url: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{TileMatrix}/{TileCol}/{TileRow}.jpeg',
             layer: 'ch.swisstopo.swissimage',
             style: 'default',
@@ -87,7 +103,6 @@
           iconUrl: 'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
           tooltip: 'Austrian OGD Basemap Ortho',
           creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
-            // Fixed URL: swapped TileRow/TileCol to match standard WMTS order
             url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg',
             layer: 'bmaporthofoto30cm',
             style: 'normal',
@@ -100,74 +115,45 @@
           }),
         }),
       )
+
+      viewer.baseLayerPicker.viewModel.terrainProviderViewModels.push(
+        new Cesium.ProviderViewModel({
+          name: 'swisstopo Terrain',
+          tooltip: 'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
+          iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
+          creationFunction: () => Cesium.CesiumTerrainProvider.fromUrl(
+            'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
+            { requestVertexNormals: true },
+          ),
+        }),
+        new Cesium.ProviderViewModel({
+          name: 'Mapterhorn Terrarium',
+          tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
+          iconUrl: '/mapterhorn-icon.png',
+          creationFunction: () => martiniTerrainProvider,
+        }),
+      )
     }
-    const terrariumWorker = new Worker(
-      new URL('terrarium.worker.ts', import.meta.url),
-      { type: 'module' },
-    )
-
-    // Mapterhorn Terrarium-encoded elevation tiles via PMTiles
-    const terrainResource = new PMTilesHeightmapResource({
-      url: 'https://download.mapterhorn.com/planet.pmtiles',
-      tileSize: 512,
-      maxZoom: 12,
-    })
-
-    // Terrarium format uses a different encoding scheme to Mapbox Terrain-RGB
-    // @ts-ignore
-    const terrainDecoder = new WorkerFarmTerrainDecoder({
-      worker: terrariumWorker,
-    })
-
-    // Construct terrain provider with Mapterhorn PMTiles datasource and Terrarium RGB decoding
-    // @ts-ignore
-    const terrainProvider = new MartiniTerrainProvider({
-      resource: terrainResource,
-      decoder: terrainDecoder,
-    })
-
-    viewer.baseLayerPicker.viewModel.terrainProviderViewModels.push(
-      new Cesium.ProviderViewModel({
-        name: 'swisstopo Terrain',
-        tooltip: 'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
-        iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
-        creationFunction: () => Cesium.CesiumTerrainProvider.fromUrl(
-          'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
-          { requestVertexNormals: true },
-        ),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'Mapterhorn Terrarium',
-        tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
-        iconUrl: '/mapterhorn-icon.png',
-        creationFunction: () => terrainProvider,
-      }),
-
-    )
-
-  // ws = new WebSocket('ws://localhost:9100?session=default')
-  // ws.addEventListener('message', async event => {
-  //   const { id, method, params } = JSON.parse(event.data)
-  //   const result = await bridge.execute({ action: method, params })
-  //   ws.send(JSON.stringify({ id, result }))
-  // })
   }
 </script>
 
 <template>
   <div style="position: relative; width: 100%; height: 100%;">
     <vc-config-provider :locale="enUS">
-
       <vc-viewer
         :access-token="accessToken"
         :animation="true"
-        :base-layer-picker="true"
+        :base-layer-picker="!settingsStore.useCustomLayerSwitcher"
         style="width: 100%; height: 100%;"
         :timeline="true"
         @ready="onViewerReady"
-      />
+      >
+        <MapProviders
+          v-if="settingsStore.useCustomLayerSwitcher"
+          :martini-terrain-provider="martiniTerrainProvider"
+        />
+      </vc-viewer>
       <NorthArrow v-if="viewerRef" :viewer="viewerRef" />
     </vc-config-provider>
-
   </div>
 </template>

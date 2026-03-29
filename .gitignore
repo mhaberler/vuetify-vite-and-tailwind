@@ -29,3 +29,4 @@ typed-router.d.ts
 .eslintrc-auto-import.json
 .env.development
 
+.claude/settings.local.json
