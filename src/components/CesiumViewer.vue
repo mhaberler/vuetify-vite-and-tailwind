@@ -10,10 +10,20 @@
 
   const { token: accessToken, hasToken } = useCesiumToken()
   const settingsStore = useSettingsStore()
+  const osmBuildingsAssetId = Number.parseInt('96188', 10)
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
+  const buildingsLoadPromise = shallowRef<Promise<void> | null>(null)
+  const buildingsStatus = ref<'idle' | 'loading' | 'loaded' | 'error'>('idle')
+  const buildingsError = ref<string | null>(null)
   const compassWidget = shallowRef<{ destroy: () => void } | null>(null)
   const zoomControlWidget = shallowRef<{ destroy: () => void } | null>(null)
+  const homeDestination = Cesium.Cartesian3.fromDegrees(15.4395, 47.0707, 3500)
+  const homeOrientation = {
+    heading: 0,
+    pitch: Cesium.Math.toRadians(-65),
+    roll: 0,
+  }
 
   // Hoist Mapterhorn construction to setup scope so it can be passed as a prop.
   // markRaw prevents Vue from proxying the Cesium object.
@@ -37,12 +47,55 @@
   }))
 
   let mounted = true
+  let buildingsLoadVersion = 0
+
+  function getCesiumRuntime () {
+    return (window as Window & { Cesium?: typeof Cesium }).Cesium ?? Cesium
+  }
+
+  if (import.meta.env.DEV) {
+    Object.assign(window as Window & { __cesiumDebug?: unknown }, {
+      __cesiumDebug: {
+        get viewer () {
+          return viewerRef.value
+        },
+        get buildingsTileset () {
+          return buildingsTileset.value
+        },
+        get buildingsStatus () {
+          return buildingsStatus.value
+        },
+        get buildingsError () {
+          return buildingsError.value
+        },
+        get show3DBuildings () {
+          return settingsStore.show3DBuildings
+        },
+      },
+    })
+  }
 
   onUnmounted(() => {
     mounted = false
-    try { terrariumWorker.terminate() } catch {}
-    try { destroyCompass() } catch {}
-    try { destroyZoomControl() } catch {}
+    try {
+      terrariumWorker.terminate()
+    } catch {
+      // noop
+    }
+    buildingsLoadVersion += 1
+    buildingsLoadPromise.value = null
+    buildingsTileset.value = null
+    viewerRef.value = null
+    try {
+      destroyCompass()
+    } catch {
+      // noop
+    }
+    try {
+      destroyZoomControl()
+    } catch {
+      // noop
+    }
   })
 
   function onViewerReady ({ viewer }: VcReadyObject) {
@@ -53,6 +106,10 @@
     controller.inertiaTranslate = 0.1
 
     viewerRef.value = viewer
+    viewer.camera.setView({
+      destination: homeDestination,
+      orientation: homeOrientation,
+    })
 
     if (settingsStore.showCompass) createCompass(viewer)
     if (settingsStore.showZoomControl) createZoomControl(viewer)
@@ -153,6 +210,8 @@
       // Valid Ion token — append custom providers alongside Ion defaults
       vm.imageryProviderViewModels.push(...imageryModels)
       vm.terrainProviderViewModels.push(...terrainModels)
+      vm.selectedImagery = imageryModels[0]
+      vm.selectedTerrain = vm.terrainProviderViewModels.find((model: Cesium.ProviderViewModel) => model.name === 'Cesium World Terrain') ?? terrainModels[1]
     } else {
       // No Ion token — replace defaults entirely with custom providers
       vm.imageryProviderViewModels = imageryModels
@@ -163,13 +222,71 @@
   }
 
   async function loadBuildings (viewer: Cesium.Viewer) {
-    buildingsTileset.value = await Cesium.createOsmBuildingsAsync()
-    viewer.scene.primitives.add(buildingsTileset.value)
+    if (!hasToken.value || buildingsTileset.value || buildingsLoadPromise.value) return
+
+    buildingsStatus.value = 'loading'
+    buildingsError.value = null
+
+    if (viewer.camera.positionCartographic.height > 100_000) {
+      viewer.camera.flyTo({
+        destination: homeDestination,
+        orientation: homeOrientation,
+        duration: 1.5,
+      })
+    }
+
+    const loadVersion = ++buildingsLoadVersion
+    buildingsLoadPromise.value = (async () => {
+      try {
+        const cesiumRuntime = getCesiumRuntime()
+        const resource = await cesiumRuntime.IonResource.fromAssetId(osmBuildingsAssetId, {
+          accessToken: accessToken.value,
+        })
+        const tileset = await cesiumRuntime.Cesium3DTileset.fromUrl(resource, {
+          maximumScreenSpaceError: 8,
+        })
+        tileset.style = new cesiumRuntime.Cesium3DTileStyle({
+          color: 'rgb(255, 255, 255)',
+        })
+        ;(tileset as Cesium.Cesium3DTileset & { showOutline?: boolean, enableShowOutline?: boolean }).showOutline = false
+        ;(tileset as Cesium.Cesium3DTileset & { showOutline?: boolean, enableShowOutline?: boolean }).enableShowOutline = false
+
+        // Drop stale results if the toggle changed, token disappeared, or a newer load started.
+        if (!mounted || !settingsStore.show3DBuildings || !hasToken.value || loadVersion !== buildingsLoadVersion) {
+          tileset.destroy()
+          return
+        }
+
+        buildingsTileset.value = tileset
+        viewer.scene.primitives.add(tileset)
+        buildingsStatus.value = 'loaded'
+      } catch (error) {
+        buildingsStatus.value = 'error'
+        buildingsError.value = error instanceof Error ? error.message : String(error)
+        console.error('Failed to load OSM buildings:', error)
+      } finally {
+        if (loadVersion === buildingsLoadVersion) {
+          buildingsLoadPromise.value = null
+        }
+      }
+    })()
+
+    await buildingsLoadPromise.value
   }
 
   function unloadBuildings (viewer: Cesium.Viewer) {
+    buildingsLoadVersion += 1
+    buildingsLoadPromise.value = null
+    buildingsStatus.value = 'idle'
+    buildingsError.value = null
     if (buildingsTileset.value) {
-      viewer.scene.primitives.remove(buildingsTileset.value)
+      try {
+        if (!viewer.isDestroyed()) {
+          viewer.scene.primitives.remove(buildingsTileset.value)
+        }
+      } catch {
+        // noop
+      }
       buildingsTileset.value = null
     }
   }
@@ -177,6 +294,12 @@
   watch(() => settingsStore.show3DBuildings, enabled => {
     if (!viewerRef.value) return
     if (enabled) loadBuildings(viewerRef.value)
+    else unloadBuildings(viewerRef.value)
+  })
+
+  watch(hasToken, hasValidToken => {
+    if (!viewerRef.value || !settingsStore.show3DBuildings) return
+    if (hasValidToken) loadBuildings(viewerRef.value)
     else unloadBuildings(viewerRef.value)
   })
 
@@ -195,7 +318,7 @@
     const { default: ZoomController } = await import('@cesium-extends/zoom-control')
     if (!mounted) return
     zoomControlWidget.value = new ZoomController(viewer, {
-      home: Cesium.Cartesian3.fromDegrees(15.210_882, 47.128_521, 1500),
+      home: homeDestination,
     })
   }
 

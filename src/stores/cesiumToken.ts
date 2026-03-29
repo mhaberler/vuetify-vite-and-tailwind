@@ -5,9 +5,15 @@ import { defineStore } from 'pinia'
 const COOKIE_KEY = 'cesium_ion_token'
 const COOKIE_EXPIRY_DAYS = 365
 
+function getDefaultToken () {
+  return import.meta.env.VITE_CESIUM_ION_TOKEN as string
+    || import.meta.env.VITE_CESIUM_TOKEN as string
+    || ''
+}
+
 export const useCesiumTokenStore = defineStore('cesiumToken', {
   state: () => ({
-    token: Cookies.get(COOKIE_KEY) || import.meta.env.VITE_CESIUM_ION_TOKEN as string || '',
+    token: Cookies.get(COOKIE_KEY) || getDefaultToken(),
   }),
   getters: {
     hasToken: state => !!state.token,
@@ -40,7 +46,7 @@ export const useCesiumTokenStore = defineStore('cesiumToken', {
     },
     clearToken () {
       Cookies.remove(COOKIE_KEY)
-      const fallback = import.meta.env.VITE_CESIUM_ION_TOKEN as string || ''
+      const fallback = getDefaultToken()
       this.token = fallback
       Ion.defaultAccessToken = fallback
     },

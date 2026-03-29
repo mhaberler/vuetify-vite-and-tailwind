@@ -52,6 +52,7 @@
           <v-text-field
             v-model="cesiumTokenInput"
             :append-inner-icon="showTokenText ? 'mdi-eye-off' : 'mdi-eye'"
+            autocomplete="new-password"
             clearable
             density="compact"
             hint="Leave empty to use the default token"
@@ -98,6 +99,7 @@
           <v-text-field
             v-model="bingKeyInput"
             :append-inner-icon="showBingKey ? 'mdi-eye-off' : 'mdi-eye'"
+            autocomplete="new-password"
             clearable
             density="compact"
             label="Bing Maps Key"
@@ -147,10 +149,14 @@
         <v-switch
           v-model="settingsStore.show3DBuildings"
           class="mb-4"
+          :disabled="!cesiumTokenStore.hasToken"
           hide-details
           label="3D Buildings"
           @update:model-value="settingsStore.save()"
         />
+        <div v-if="!cesiumTokenStore.hasToken" class="text-caption mb-4 mt-n3 text-medium-emphasis">
+          3D Buildings require a valid Cesium Ion token.
+        </div>
         <v-switch
           v-model="darkMode"
           hide-details
