@@ -12,6 +12,8 @@
   const settingsStore = useSettingsStore()
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
+  const compassWidget = shallowRef<{ destroy: () => void } | null>(null)
+  const zoomControlWidget = shallowRef<{ destroy: () => void } | null>(null)
 
   // Hoist Mapterhorn construction to setup scope so it can be passed as a prop.
   // markRaw prevents Vue from proxying the Cesium object.
@@ -34,7 +36,14 @@
     decoder: terrainDecoder,
   }))
 
-  onUnmounted(() => terrariumWorker.terminate())
+  let mounted = true
+
+  onUnmounted(() => {
+    mounted = false
+    try { terrariumWorker.terminate() } catch {}
+    try { destroyCompass() } catch {}
+    try { destroyZoomControl() } catch {}
+  })
 
   function onViewerReady ({ viewer }: VcReadyObject) {
     const controller = viewer.scene.screenSpaceCameraController
@@ -44,6 +53,10 @@
     controller.inertiaTranslate = 0.1
 
     viewerRef.value = viewer
+
+    if (settingsStore.showCompass) createCompass(viewer)
+    if (settingsStore.showZoomControl) createZoomControl(viewer)
+    if (settingsStore.show3DBuildings) loadBuildings(viewer)
 
     const vm = viewer.baseLayerPicker.viewModel
 
@@ -167,6 +180,42 @@
     else unloadBuildings(viewerRef.value)
   })
 
+  async function createCompass (viewer: Cesium.Viewer) {
+    const { default: Compass } = await import('@cesium-extends/compass')
+    if (!mounted) return
+    compassWidget.value = new Compass(viewer, {})
+  }
+
+  function destroyCompass () {
+    compassWidget.value?.destroy()
+    compassWidget.value = null
+  }
+
+  async function createZoomControl (viewer: Cesium.Viewer) {
+    const { default: ZoomController } = await import('@cesium-extends/zoom-control')
+    if (!mounted) return
+    zoomControlWidget.value = new ZoomController(viewer, {
+      home: Cesium.Cartesian3.fromDegrees(15.210_882, 47.128_521, 1500),
+    })
+  }
+
+  function destroyZoomControl () {
+    zoomControlWidget.value?.destroy()
+    zoomControlWidget.value = null
+  }
+
+  watch(() => settingsStore.showCompass, enabled => {
+    if (!viewerRef.value) return
+    if (enabled) createCompass(viewerRef.value)
+    else destroyCompass()
+  })
+
+  watch(() => settingsStore.showZoomControl, enabled => {
+    if (!viewerRef.value) return
+    if (enabled) createZoomControl(viewerRef.value)
+    else destroyZoomControl()
+  })
+
   function zoomIn () {
     viewerRef.value?.camera.zoomIn(viewerRef.value.camera.positionCartographic.height * 0.4)
   }
@@ -198,3 +247,6 @@
     </div>
   </div>
 </template>
+
+<style>
+</style>

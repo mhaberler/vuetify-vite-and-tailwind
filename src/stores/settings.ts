@@ -15,6 +15,8 @@ export const useSettingsStore = defineStore('settings', {
     bingMapsKey: '' as string,
     showZoom: true as boolean,
     showNorth: true as boolean,
+    showCompass: true as boolean,
+    showZoomControl: true as boolean,
     show3DBuildings: false as boolean,
     ...loadSettings(),
   }),
@@ -24,6 +26,8 @@ export const useSettingsStore = defineStore('settings', {
         bingMapsKey: this.bingMapsKey,
         showZoom: this.showZoom,
         showNorth: this.showNorth,
+        showCompass: this.showCompass,
+        showZoomControl: this.showZoomControl,
         show3DBuildings: this.show3DBuildings,
       }))
     },

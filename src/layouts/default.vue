@@ -48,71 +48,76 @@
         <v-divider class="my-4" />
         <div class="text-subtitle-2 mb-2">API Keys</div>
         <div class="text-caption font-weight-medium mb-1">Cesium Ion Token</div>
-        <v-text-field
-          v-model="cesiumTokenInput"
-          :append-inner-icon="showTokenText ? 'mdi-eye-off' : 'mdi-eye'"
-          clearable
-          density="compact"
-          hint="Leave empty to use the default token"
-          label="Access Token"
-          persistent-hint
-          :type="showTokenText ? 'text' : 'password'"
-          @click:append-inner="showTokenText = !showTokenText"
-          @click:clear="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
-        />
-        <v-btn
-          class="mt-2 mr-2"
-          :color="tokenSaved ? 'success' : 'primary'"
-          :disabled="!cesiumTokenInput || cesiumTokenInput === cesiumTokenStore.token || tokenValidating"
-          :loading="tokenValidating"
-          size="small"
-          @click="saveToken"
-        >
-          {{ tokenSaved ? 'Saved!' : 'Save Token' }}
-        </v-btn>
-        <v-btn
-          class="mt-2"
-          color="error"
-          :disabled="!cesiumTokenStore.isCustomToken"
-          size="small"
-          variant="outlined"
-          @click="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
-        >
-          Clear Token
-        </v-btn>
-        <div v-if="tokenValidationFailed" class="text-caption mt-1 text-error">
-          Invalid token
-        </div>
-        <div v-else-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
-          Using custom token (saved in cookie)
-        </div>
+        <form @submit.prevent="saveToken">
+          <v-text-field
+            v-model="cesiumTokenInput"
+            :append-inner-icon="showTokenText ? 'mdi-eye-off' : 'mdi-eye'"
+            clearable
+            density="compact"
+            hint="Leave empty to use the default token"
+            label="Access Token"
+            persistent-hint
+            :type="showTokenText ? 'text' : 'password'"
+            @click:append-inner="showTokenText = !showTokenText"
+            @click:clear="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
+          />
+          <v-btn
+            class="mt-2 mr-2"
+            :color="tokenSaved ? 'success' : 'primary'"
+            :disabled="!cesiumTokenInput || cesiumTokenInput === cesiumTokenStore.token || tokenValidating"
+            :loading="tokenValidating"
+            size="small"
+            type="submit"
+          >
+            {{ tokenSaved ? 'Saved!' : 'Save Token' }}
+          </v-btn>
+          <v-btn
+            class="mt-2"
+            color="error"
+            :disabled="!cesiumTokenStore.isCustomToken"
+            size="small"
+            type="button"
+            variant="outlined"
+            @click="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
+          >
+            Clear Token
+          </v-btn>
+          <div v-if="tokenValidationFailed" class="text-caption mt-1 text-error">
+            Invalid token
+          </div>
+          <div v-else-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
+            Using custom token (saved in cookie)
+          </div>
+        </form>
 
         <div class="text-caption font-weight-medium mb-1 mt-4">
           Bing Maps Key
           <span class="font-italic text-medium-emphasis"> — optional, Bing layers work via Ion without this</span>
         </div>
-        <v-text-field
-          v-model="bingKeyInput"
-          :append-inner-icon="showBingKey ? 'mdi-eye-off' : 'mdi-eye'"
-          clearable
-          density="compact"
-          label="Bing Maps Key"
-          :type="showBingKey ? 'text' : 'password'"
-          @click:append-inner="showBingKey = !showBingKey"
-          @click:clear="settingsStore.bingMapsKey = ''; settingsStore.save()"
-        />
-        <v-btn
-          class="mt-2"
-          color="primary"
-          :disabled="!bingKeyInput || bingKeyInput === settingsStore.bingMapsKey"
-          size="small"
-          @click="settingsStore.bingMapsKey = bingKeyInput; settingsStore.save()"
-        >
-          Save Key
-        </v-btn>
-        <div v-if="settingsStore.bingMapsKey" class="text-caption mt-1 text-medium-emphasis">
-          Custom Bing key saved
-        </div>
+        <form @submit.prevent="settingsStore.bingMapsKey = bingKeyInput; settingsStore.save()">
+          <v-text-field
+            v-model="bingKeyInput"
+            :append-inner-icon="showBingKey ? 'mdi-eye-off' : 'mdi-eye'"
+            clearable
+            density="compact"
+            label="Bing Maps Key"
+            :type="showBingKey ? 'text' : 'password'"
+            @click:append-inner="showBingKey = !showBingKey"
+            @click:clear="settingsStore.bingMapsKey = ''; settingsStore.save()"
+          />
+          <v-btn
+            class="mt-2"
+            color="primary"
+            :disabled="!bingKeyInput || bingKeyInput === settingsStore.bingMapsKey"
+            size="small"
+            type="submit"
+          >
+            Save Key
+          </v-btn>
+          <div v-if="settingsStore.bingMapsKey" class="text-caption mt-1 text-medium-emphasis">
+            Custom Bing key saved
+          </div>
+        </form>
 
         <div class="text-subtitle-2 mb-2">Viewer Controls</div>
         <v-switch
@@ -125,6 +130,18 @@
           v-model="settingsStore.showNorth"
           hide-details
           label="North arrow"
+          @update:model-value="settingsStore.save()"
+        />
+        <v-switch
+          v-model="settingsStore.showCompass"
+          hide-details
+          label="Compass"
+          @update:model-value="settingsStore.save()"
+        />
+        <v-switch
+          v-model="settingsStore.showZoomControl"
+          hide-details
+          label="Zoom controller"
           @update:model-value="settingsStore.save()"
         />
         <v-switch
