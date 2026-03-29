@@ -14,8 +14,6 @@
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
   const buildingsLoadPromise = shallowRef<Promise<void> | null>(null)
-  const buildingsStatus = ref<'idle' | 'loading' | 'loaded' | 'error'>('idle')
-  const buildingsError = ref<string | null>(null)
   const compassWidget = shallowRef<{ destroy: () => void } | null>(null)
   const zoomControlWidget = shallowRef<{ destroy: () => void } | null>(null)
   const homeDestination = Cesium.Cartesian3.fromDegrees(15.4395, 47.0707, 3500)
@@ -51,28 +49,6 @@
 
   function getCesiumRuntime () {
     return (window as Window & { Cesium?: typeof Cesium }).Cesium ?? Cesium
-  }
-
-  if (import.meta.env.DEV) {
-    Object.assign(window as Window & { __cesiumDebug?: unknown }, {
-      __cesiumDebug: {
-        get viewer () {
-          return viewerRef.value
-        },
-        get buildingsTileset () {
-          return buildingsTileset.value
-        },
-        get buildingsStatus () {
-          return buildingsStatus.value
-        },
-        get buildingsError () {
-          return buildingsError.value
-        },
-        get show3DBuildings () {
-          return settingsStore.show3DBuildings
-        },
-      },
-    })
   }
 
   onUnmounted(() => {
@@ -224,9 +200,6 @@
   async function loadBuildings (viewer: Cesium.Viewer) {
     if (!hasToken.value || buildingsTileset.value || buildingsLoadPromise.value) return
 
-    buildingsStatus.value = 'loading'
-    buildingsError.value = null
-
     if (viewer.camera.positionCartographic.height > 100_000) {
       viewer.camera.flyTo({
         destination: homeDestination,
@@ -259,10 +232,7 @@
 
         buildingsTileset.value = tileset
         viewer.scene.primitives.add(tileset)
-        buildingsStatus.value = 'loaded'
       } catch (error) {
-        buildingsStatus.value = 'error'
-        buildingsError.value = error instanceof Error ? error.message : String(error)
         console.error('Failed to load OSM buildings:', error)
       } finally {
         if (loadVersion === buildingsLoadVersion) {
@@ -277,8 +247,6 @@
   function unloadBuildings (viewer: Cesium.Viewer) {
     buildingsLoadVersion += 1
     buildingsLoadPromise.value = null
-    buildingsStatus.value = 'idle'
-    buildingsError.value = null
     if (buildingsTileset.value) {
       try {
         if (!viewer.isDestroyed()) {
