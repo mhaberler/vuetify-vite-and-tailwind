@@ -23,6 +23,21 @@ export const useCesiumTokenStore = defineStore('cesiumToken', {
       })
       Ion.defaultAccessToken = token
     },
+    async validateAndSetToken (token: string): Promise<boolean> {
+      try {
+        const res = await fetch('https://api.cesium.com/v1/me', {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+        })
+        if (res.ok) {
+          this.setToken(token)
+          return true
+        }
+        return false
+      } catch {
+        return false
+      }
+    },
     clearToken () {
       Cookies.remove(COOKIE_KEY)
       const fallback = import.meta.env.VITE_CESIUM_ION_TOKEN as string || ''

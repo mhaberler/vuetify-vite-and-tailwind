@@ -83,13 +83,17 @@
         <v-btn
           class="mt-2"
           color="primary"
-          :disabled="!cesiumTokenInput || cesiumTokenInput === cesiumTokenStore.token"
+          :disabled="!cesiumTokenInput || cesiumTokenInput === cesiumTokenStore.token || tokenValidating"
+          :loading="tokenValidating"
           size="small"
-          @click="cesiumTokenStore.setToken(cesiumTokenInput)"
+          @click="saveToken"
         >
           Save Token
         </v-btn>
-        <div v-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
+        <div v-if="tokenValidationFailed" class="text-caption mt-1 text-error">
+          Invalid token
+        </div>
+        <div v-else-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
           Using custom token (saved in cookie)
         </div>
 
@@ -142,6 +146,16 @@
   const settingsStore = useSettingsStore()
   const cesiumTokenInput = ref(cesiumTokenStore.token)
   const showTokenText = ref(false)
+  const tokenValidating = ref(false)
+  const tokenValidationFailed = ref(false)
+
+  async function saveToken () {
+    tokenValidating.value = true
+    tokenValidationFailed.value = false
+    const ok = await cesiumTokenStore.validateAndSetToken(cesiumTokenInput.value)
+    tokenValidating.value = false
+    if (!ok) tokenValidationFailed.value = true
+  }
   const bingKeyInput = ref(settingsStore.bingMapsKey)
   const showBingKey = ref(false)
 
