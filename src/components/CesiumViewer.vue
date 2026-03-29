@@ -4,13 +4,10 @@
   import * as Cesium from 'cesium'
   import enUS from 'vue-cesium/es/locale/lang/en-us'
   import { useCesiumToken } from '@/composables/useCesiumToken'
-  import { useSettingsStore } from '@/stores/settings'
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
-  import MapProviders from './MapProviders.vue'
   import NorthArrow from './NorthArrow.vue'
 
   const { token: accessToken } = useCesiumToken()
-  const settingsStore = useSettingsStore()
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
 
   // Hoist Mapterhorn construction to setup scope so it can be passed as a prop.
@@ -43,9 +40,11 @@
 
     viewerRef.value = viewer
 
-    // When the built-in picker is active, register custom providers into it
+    // When the built-in picker is active, replace default providers with custom ones
     if (viewer.baseLayerPicker) {
-      viewer.baseLayerPicker.viewModel.imageryProviderViewModels.push(
+      const vm = viewer.baseLayerPicker.viewModel
+
+      vm.imageryProviderViewModels = [
         new Cesium.ProviderViewModel({
           name: 'VersaTiles Satellite',
           tooltip: 'Global Sentinel-2 imagery (No stretching)',
@@ -114,9 +113,9 @@
             credit: new Cesium.Credit('© basemap.at', true),
           }),
         }),
-      )
+      ]
 
-      viewer.baseLayerPicker.viewModel.terrainProviderViewModels.push(
+      vm.terrainProviderViewModels = [
         new Cesium.ProviderViewModel({
           name: 'swisstopo Terrain',
           tooltip: 'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
@@ -132,7 +131,10 @@
           iconUrl: '/mapterhorn-icon.png',
           creationFunction: () => martiniTerrainProvider,
         }),
-      )
+      ]
+
+      vm.selectedImagery = vm.imageryProviderViewModels[0]
+      vm.selectedTerrain = vm.terrainProviderViewModels[1]
     }
   }
 </script>
@@ -143,16 +145,11 @@
       <vc-viewer
         :access-token="accessToken"
         :animation="true"
-        :base-layer-picker="!settingsStore.useCustomLayerSwitcher"
+        base-layer-picker
         style="width: 100%; height: 100%;"
         :timeline="true"
         @ready="onViewerReady"
-      >
-        <MapProviders
-          v-if="settingsStore.useCustomLayerSwitcher"
-          :martini-terrain-provider="martiniTerrainProvider"
-        />
-      </vc-viewer>
+      />
       <NorthArrow v-if="viewerRef" :viewer="viewerRef" />
     </vc-config-provider>
   </div>

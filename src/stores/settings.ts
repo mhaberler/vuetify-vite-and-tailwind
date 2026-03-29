@@ -10,14 +10,12 @@ function loadSettings () {
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    useCustomLayerSwitcher: false as boolean,
     bingMapsKey: '' as string,
     ...loadSettings(),
   }),
   actions: {
     save () {
       localStorage.setItem(LS_KEY, JSON.stringify({
-        useCustomLayerSwitcher: this.useCustomLayerSwitcher,
         bingMapsKey: this.bingMapsKey,
       }))
     },

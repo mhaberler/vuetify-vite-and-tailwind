@@ -65,13 +65,6 @@
           hide-details
           label="Dark mode"
         />
-        <v-switch
-          v-model="settingsStore.useCustomLayerSwitcher"
-          class="mt-2"
-          hide-details
-          label="Custom layer switcher"
-          @update:model-value="settingsStore.save()"
-        />
         <v-divider class="my-4" />
         <div class="text-subtitle-2 mb-2">API Keys</div>
         <div class="text-caption font-weight-medium mb-1">Cesium Ion Token</div>
