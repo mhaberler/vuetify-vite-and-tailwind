@@ -6,11 +6,9 @@
   } from '@macrostrat/cesium-martini'
   import * as Cesium from 'cesium'
   import enUS from 'vue-cesium/es/locale/lang/en-us'
-  import { useCesiumToken } from '@/composables/useCesiumToken'
   import { useAppStore } from '@/stores/app'
   import { useSettingsStore } from '@/stores/settings'
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
-  import NorthArrow from './NorthArrow.vue'
 
   type CameraOrientation = {
     heading: number
@@ -28,17 +26,10 @@
   }
 
   const appStore = useAppStore()
-  const { token: accessToken, hasToken } = useCesiumToken()
   const settingsStore = useSettingsStore()
   const versaTilesIconUrl = `${import.meta.env.BASE_URL}versatiles-logo.png`
   const mapterhornIconUrl = `${import.meta.env.BASE_URL}mapterhorn-icon.png`
-  const openAipApiKey = import.meta.env.VITE_OPENAIP_API_KEY?.trim()
-  const osmBuildingsAssetId = Number.parseInt('96188', 10)
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
-  const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
-  const buildingsLoadPromise = shallowRef<Promise<void> | null>(null)
-  const compassWidget = shallowRef<{ destroy: () => void } | null>(null)
-  const zoomControlWidget = shallowRef<{ destroy: () => void } | null>(null)
   const imagerySelectionSubscription = shallowRef<SubscriptionHandle | null>(
     null,
   )
@@ -80,9 +71,6 @@
       decoder: terrainDecoder,
     }),
   )
-
-  let mounted = true
-  let buildingsLoadVersion = 0
 
   function getCesiumRuntime () {
     return (window as Window & { Cesium?: typeof Cesium }).Cesium ?? Cesium
@@ -217,26 +205,12 @@
   }
 
   onUnmounted(() => {
-    mounted = false
     try {
       terrariumWorker.terminate()
     } catch {
     // noop
     }
-    buildingsLoadVersion += 1
-    buildingsLoadPromise.value = null
-    buildingsTileset.value = null
     viewerRef.value = null
-    try {
-      destroyCompass()
-    } catch {
-    // noop
-    }
-    try {
-      destroyZoomControl()
-    } catch {
-    // noop
-    }
     clearProviderSelectionSubscriptions()
   })
 
@@ -253,10 +227,6 @@
       destination: startupCameraState.destination,
       orientation: startupCameraState.orientation,
     })
-
-    if (settingsStore.showCompass) createCompass(viewer)
-    if (settingsStore.showZoomControl) createZoomControl(viewer)
-    if (settingsStore.show3DBuildings) loadBuildings(viewer)
 
     const vm = viewer.baseLayerPicker.viewModel
 
@@ -319,25 +289,6 @@
             ),
           }),
       }),
-      ...(openAipApiKey
-        ? [
-          new Cesium.ProviderViewModel({
-            name: 'OpenAIP',
-            tooltip: 'OpenAIP aeronautical chart overlay',
-            iconUrl: 'https://www.openaip.net/favicon.ico',
-            creationFunction: () =>
-              new Cesium.UrlTemplateImageryProvider({
-                url: `https://{s}.api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(openAipApiKey)}`,
-                subdomains: ['a', 'b', 'c'],
-                tilingScheme: new Cesium.WebMercatorTilingScheme(),
-                credit: new Cesium.Credit(
-                  '© <a href="https://www.openaip.net" target="_blank">OpenAIP</a> (CC BY-NC 4.0)',
-                  true,
-                ),
-              }),
-          }),
-        ]
-        : []),
       new Cesium.ProviderViewModel({
         name: 'Austria Basemap',
         iconUrl:
@@ -428,32 +379,14 @@
       }),
     ]
 
-    if (hasToken.value) {
-      // Valid Ion token — append custom providers alongside Ion defaults
-      vm.imageryProviderViewModels.push(...imageryModels)
-      vm.terrainProviderViewModels.push(...terrainModels)
-      const defaultTerrain
-        = vm.terrainProviderViewModels.find(
-          (model: Cesium.ProviderViewModel) =>
-            model.name === 'Cesium World Terrain',
-        ) ?? terrainModels[1]
-      vm.selectedImagery
-        = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1]
-          ?? imageryModels[0]
-      vm.selectedTerrain
-        = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1]
-          ?? defaultTerrain
-    } else {
-      // No Ion token — replace defaults entirely with custom providers
-      vm.imageryProviderViewModels = imageryModels
-      vm.terrainProviderViewModels = terrainModels
-      vm.selectedImagery
-        = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1]
-          ?? vm.imageryProviderViewModels[0]
-      vm.selectedTerrain
-        = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1]
-          ?? vm.terrainProviderViewModels[1]
-    }
+    vm.imageryProviderViewModels = imageryModels
+    vm.terrainProviderViewModels = terrainModels
+    vm.selectedImagery
+      = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1]
+        ?? vm.imageryProviderViewModels[0]
+    vm.selectedTerrain
+      = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1]
+        ?? vm.terrainProviderViewModels[1]
 
     watchProviderSelections(vm)
 
@@ -461,148 +394,6 @@
       saveSelectedProviders(vm)
     }
   }
-
-  async function loadBuildings (viewer: Cesium.Viewer) {
-    if (!hasToken.value || buildingsTileset.value || buildingsLoadPromise.value)
-      return
-
-    const startupCameraState = getStartupCameraState()
-
-    if (viewer.camera.positionCartographic.height > 100_000) {
-      viewer.camera.flyTo({
-        destination: startupCameraState.destination,
-        orientation: startupCameraState.orientation,
-        duration: 1.5,
-      })
-    }
-
-    const loadVersion = ++buildingsLoadVersion
-    buildingsLoadPromise.value = (async () => {
-      try {
-        const cesiumRuntime = getCesiumRuntime()
-        const resource = await cesiumRuntime.IonResource.fromAssetId(
-          osmBuildingsAssetId,
-          {
-            accessToken: accessToken.value,
-          },
-        )
-        const tileset = await cesiumRuntime.Cesium3DTileset.fromUrl(resource, {
-          maximumScreenSpaceError: 8,
-        })
-        tileset.style = new cesiumRuntime.Cesium3DTileStyle({
-          color: 'rgb(255, 255, 255)',
-        });
-        (
-          tileset as Cesium.Cesium3DTileset & {
-            showOutline?: boolean
-            enableShowOutline?: boolean
-          }
-        ).showOutline = false;
-        (
-          tileset as Cesium.Cesium3DTileset & {
-            showOutline?: boolean
-            enableShowOutline?: boolean
-          }
-        ).enableShowOutline = false
-
-        // Drop stale results if the toggle changed, token disappeared, or a newer load started.
-        if (
-          !mounted
-          || !settingsStore.show3DBuildings
-          || !hasToken.value
-          || loadVersion !== buildingsLoadVersion
-        ) {
-          tileset.destroy()
-          return
-        }
-
-        buildingsTileset.value = tileset
-        viewer.scene.primitives.add(tileset)
-      } catch (error) {
-        console.error('Failed to load OSM buildings:', error)
-      } finally {
-        if (loadVersion === buildingsLoadVersion) {
-          buildingsLoadPromise.value = null
-        }
-      }
-    })()
-
-    await buildingsLoadPromise.value
-  }
-
-  function unloadBuildings (viewer: Cesium.Viewer) {
-    buildingsLoadVersion += 1
-    buildingsLoadPromise.value = null
-    if (buildingsTileset.value) {
-      try {
-        if (!viewer.isDestroyed()) {
-          viewer.scene.primitives.remove(buildingsTileset.value)
-        }
-      } catch {
-      // noop
-      }
-      buildingsTileset.value = null
-    }
-  }
-
-  watch(
-    () => settingsStore.show3DBuildings,
-    enabled => {
-      if (!viewerRef.value) return
-      if (enabled) loadBuildings(viewerRef.value)
-      else unloadBuildings(viewerRef.value)
-    },
-  )
-
-  watch(hasToken, hasValidToken => {
-    if (!viewerRef.value || !settingsStore.show3DBuildings) return
-    if (hasValidToken) loadBuildings(viewerRef.value)
-    else unloadBuildings(viewerRef.value)
-  })
-
-  async function createCompass (viewer: Cesium.Viewer) {
-    const { default: Compass } = await import('@cesium-extends/compass')
-    if (!mounted) return
-    compassWidget.value = new Compass(viewer, {})
-  }
-
-  function destroyCompass () {
-    compassWidget.value?.destroy()
-    compassWidget.value = null
-  }
-
-  async function createZoomControl (viewer: Cesium.Viewer) {
-    const { default: ZoomController }
-      = await import('@cesium-extends/zoom-control')
-    if (!mounted) return
-    const startupCameraState = getStartupCameraState()
-    zoomControlWidget.value = new ZoomController(viewer, {
-      home: startupCameraState.destination,
-    })
-  }
-
-  function destroyZoomControl () {
-    zoomControlWidget.value?.destroy()
-    zoomControlWidget.value = null
-  }
-
-  watch(
-    () => settingsStore.showCompass,
-    enabled => {
-      if (!viewerRef.value) return
-      if (enabled) createCompass(viewerRef.value)
-      else destroyCompass()
-    },
-  )
-
-  watch(
-    () => settingsStore.showZoomControl,
-    enabled => {
-      if (!viewerRef.value) return
-      if (enabled) createZoomControl(viewerRef.value)
-      else destroyZoomControl()
-    },
-  )
 
   watch(
     () => settingsStore.retainImagery,
@@ -619,51 +410,18 @@
       saveCurrentStartupView()
     },
   )
-
-  function zoomIn () {
-    viewerRef.value?.camera.zoomIn(
-      viewerRef.value.camera.positionCartographic.height * 0.4,
-    )
-  }
-
-  function zoomOut () {
-    viewerRef.value?.camera.zoomOut(
-      viewerRef.value.camera.positionCartographic.height * 0.6,
-    )
-  }
 </script>
 
 <template>
   <div style="position: relative; width: 100%; height: 100%">
     <vc-config-provider :locale="enUS">
       <vc-viewer
-        :access-token="accessToken"
         :animation="true"
         base-layer-picker
         style="width: 100%; height: 100%"
         :timeline="true"
         @ready="onViewerReady"
       />
-      <NorthArrow
-        v-if="viewerRef && settingsStore.showNorth"
-        :viewer="viewerRef"
-      />
     </vc-config-provider>
-    <div
-      v-if="settingsStore.showZoom"
-      style="
-        position: absolute;
-        bottom: 180px;
-        right: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      "
-    >
-      <v-btn density="compact" icon="mdi-plus" size="large" @click="zoomIn" />
-      <v-btn density="compact" icon="mdi-minus" size="large" @click="zoomOut" />
-    </div>
   </div>
 </template>
-
-<style></style>

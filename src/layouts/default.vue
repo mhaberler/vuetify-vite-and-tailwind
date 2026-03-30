@@ -64,151 +64,7 @@
   <v-dialog v-model="settingsOpen" max-width="480">
     <v-card title="Settings">
       <v-card-text>
-        <v-divider class="my-4" />
-        <div class="text-subtitle-2 mb-2">API Keys</div>
-        <div class="text-caption font-weight-medium mb-1">Cesium Ion Token</div>
-        <form @submit.prevent="saveToken">
-          <v-text-field
-            v-model="cesiumTokenInput"
-            :append-inner-icon="showTokenText ? 'mdi-eye-off' : 'mdi-eye'"
-            autocomplete="new-password"
-            clearable
-            density="compact"
-            hint="Leave empty to use the default token"
-            label="Access Token"
-            persistent-hint
-            :type="showTokenText ? 'text' : 'password'"
-            @click:append-inner="showTokenText = !showTokenText"
-            @click:clear="
-              cesiumTokenStore.clearToken();
-              cesiumTokenInput = cesiumTokenStore.token;
-            "
-          />
-          <v-btn
-            class="mt-2 mr-2"
-            :color="tokenSaved ? 'success' : 'primary'"
-            :disabled="
-              !cesiumTokenInput ||
-                cesiumTokenInput === cesiumTokenStore.token ||
-                tokenValidating
-            "
-            :loading="tokenValidating"
-            size="small"
-            type="submit"
-          >
-            {{ tokenSaved ? "Saved!" : "Save Token" }}
-          </v-btn>
-          <v-btn
-            class="mt-2"
-            color="error"
-            :disabled="!cesiumTokenStore.isCustomToken"
-            size="small"
-            type="button"
-            variant="outlined"
-            @click="
-              cesiumTokenStore.clearToken();
-              cesiumTokenInput = cesiumTokenStore.token;
-            "
-          >
-            Clear Token
-          </v-btn>
-          <div
-            v-if="tokenValidationFailed"
-            class="text-caption mt-1 text-error"
-          >
-            Invalid token
-          </div>
-          <div
-            v-else-if="cesiumTokenStore.isCustomToken"
-            class="text-caption mt-1 text-medium-emphasis"
-          >
-            Using custom token (saved in cookie)
-          </div>
-        </form>
-
-        <div class="text-caption font-weight-medium mb-1 mt-4">
-          Bing Maps Key
-          <span class="font-italic text-medium-emphasis">
-            — optional, Bing layers work via Ion without this</span>
-        </div>
-        <form
-          @submit.prevent="
-            settingsStore.bingMapsKey = bingKeyInput;
-            settingsStore.save();
-          "
-        >
-          <v-text-field
-            v-model="bingKeyInput"
-            :append-inner-icon="showBingKey ? 'mdi-eye-off' : 'mdi-eye'"
-            autocomplete="new-password"
-            clearable
-            density="compact"
-            label="Bing Maps Key"
-            :type="showBingKey ? 'text' : 'password'"
-            @click:append-inner="showBingKey = !showBingKey"
-            @click:clear="
-              settingsStore.bingMapsKey = '';
-              settingsStore.save();
-            "
-          />
-          <v-btn
-            class="mt-2"
-            color="primary"
-            :disabled="
-              !bingKeyInput || bingKeyInput === settingsStore.bingMapsKey
-            "
-            size="small"
-            type="submit"
-          >
-            Save Key
-          </v-btn>
-          <div
-            v-if="settingsStore.bingMapsKey"
-            class="text-caption mt-1 text-medium-emphasis"
-          >
-            Custom Bing key saved
-          </div>
-        </form>
-
-        <div class="text-subtitle-2 mb-2">Viewer Controls</div>
-        <v-switch
-          v-model="settingsStore.showZoom"
-          hide-details
-          label="Zoom buttons"
-          @update:model-value="settingsStore.save()"
-        />
-        <v-switch
-          v-model="settingsStore.showNorth"
-          hide-details
-          label="North arrow"
-          @update:model-value="settingsStore.save()"
-        />
-        <v-switch
-          v-model="settingsStore.showCompass"
-          hide-details
-          label="Compass"
-          @update:model-value="settingsStore.save()"
-        />
-        <v-switch
-          v-model="settingsStore.showZoomControl"
-          hide-details
-          label="Zoom controller"
-          @update:model-value="settingsStore.save()"
-        />
-        <v-switch
-          v-model="settingsStore.show3DBuildings"
-          class="mb-4"
-          :disabled="!cesiumTokenStore.hasToken"
-          hide-details
-          label="3D Buildings"
-          @update:model-value="settingsStore.save()"
-        />
-        <div
-          v-if="!cesiumTokenStore.hasToken"
-          class="text-caption mb-4 mt-n3 text-medium-emphasis"
-        >
-          3D Buildings require a valid Cesium Ion token.
-        </div>
+        <div class="text-subtitle-2 mb-2">Viewer Behavior</div>
         <v-switch
           v-model="settingsStore.retainImagery"
           hide-details
@@ -227,7 +83,6 @@
         >
           Saved startup view available
         </div>
-        <v-switch v-model="darkMode" hide-details label="Dark mode" />
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -239,49 +94,21 @@
 
 <script lang="ts" setup>
   import { Pane, Splitpanes } from 'splitpanes'
-  import { useTheme } from 'vuetify'
   import TimeSeries from '@/components/TimeSeries.vue'
   import { useAppStore } from '@/stores/app'
-  import { useCesiumTokenStore } from '@/stores/cesiumToken'
   import { useSettingsStore } from '@/stores/settings'
   import 'splitpanes/dist/splitpanes.css'
 
   const appStore = useAppStore()
-  const cesiumTokenStore = useCesiumTokenStore()
   const settingsStore = useSettingsStore()
-  const cesiumTokenInput = ref(cesiumTokenStore.token)
-  const showTokenText = ref(false)
-  const tokenValidating = ref(false)
-  const tokenValidationFailed = ref(false)
-  const tokenSaved = ref(false)
   const startupViewSaved = ref(false)
   let startupViewSavedTimer: number | null = null
-
-  async function saveToken () {
-    tokenValidating.value = true
-    tokenValidationFailed.value = false
-    tokenSaved.value = false
-    const ok = await cesiumTokenStore.validateAndSetToken(cesiumTokenInput.value)
-    tokenValidating.value = false
-    if (ok) {
-      tokenSaved.value = true
-      setTimeout(() => {
-        tokenSaved.value = false
-      }, 2000)
-    } else {
-      tokenValidationFailed.value = true
-    }
-  }
-  const bingKeyInput = ref(settingsStore.bingMapsKey)
-  const showBingKey = ref(false)
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
 
   const showBar = ref(true)
   const showGraph = ref(false)
   const settingsOpen = ref(false)
-
-  const theme = useTheme()
   const hasSavedStartupView = computed(
     () =>
       settingsStore.startupLongitude != null
@@ -291,12 +118,6 @@
       && settingsStore.startupPitch != null
       && settingsStore.startupRoll != null,
   )
-  const darkMode = computed({
-    get: () => theme.global.name.value === 'dark',
-    set: (val: boolean) => {
-      theme.global.name.value = val ? 'dark' : 'light'
-    },
-  })
 
   async function toggleFullscreen () {
     await (document.fullscreenElement

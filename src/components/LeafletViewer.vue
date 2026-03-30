@@ -46,8 +46,6 @@
   import { useAppStore } from '@/stores/app'
   import 'leaflet/dist/leaflet.css'
 
-  const openAipApiKey = import.meta.env.VITE_OPENAIP_API_KEY?.trim()
-
   type TileLayerDefinition = {
     key: string
     name: string
@@ -87,17 +85,6 @@
       attr: '&copy; OpenStreetMap contributors',
       maxZoom: 19,
     },
-    ...(openAipApiKey
-      ? [
-        {
-          key: 'openaip',
-          name: 'OpenAIP',
-          url: `https://{s}.api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(openAipApiKey)}`,
-          attr: '&copy; <a href="https://www.openaip.net" target="_blank">OpenAIP</a> (CC BY-NC 4.0)',
-          subdomains: 'abc',
-        },
-      ]
-      : []),
     {
       key: 'ortho',
       name: 'Austria Orthophoto',

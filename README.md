@@ -8,30 +8,20 @@ A flight review and 3D/2D geospatial visualization app built with Vue 3 and Cesi
 - Multiple open-data **imagery providers**: VersaTiles Satellite (Sentinel-2), swisstopo SWISSIMAGE, France IGN orthophoto, Austria Basemap, Tirol orthophoto
 - Multiple **terrain providers**: swisstopo (Switzerland), Mapterhorn global elevation via PMTiles
 - **Time series panel** for telemetry data, resizable via splitpanes
-- Dark mode, fullscreen, configurable terrain error level
-- Optional Cesium Ion token and Bing Maps key via Settings UI (persisted in cookie / localStorage)
+- Fullscreen and startup/imagery retention controls in Settings
 
 ## Getting Started
 
 ```bash
-npm install
-npm run dev       # dev server at http://localhost:3000
-npm run build     # type-check + production build
-npm run preview   # preview production build
+pnpm install
+pnpm run dev       # dev server at http://localhost:3000
+pnpm run build     # type-check + production build
+pnpm run preview   # preview production build
 ```
 
 ## Configuration
 
-All configuration is optional — the app runs without any API keys using open-data sources.
-
-| Variable                 | Description                                    |
-| ------------------------ | ---------------------------------------------- |
-| `VITE_OPENDATA_ION_TOKEN`  | Cesium Ion access token for Ion-hosted layers  |
-
-Runtime settings can also be entered in the **Settings** dialog:
-
-- **Cesium Ion Token** — validated against the Cesium API and stored in a secure cookie
-- **Bing Maps Key** — optional, stored in localStorage; Bing layers work via Ion without it
+The app runs against open-data imagery and terrain sources without any proprietary API keys.
 
 ## Tech Stack
 
@@ -49,11 +39,11 @@ Runtime settings can also be entered in the **Settings** dialog:
 ## Scripts
 
 ```bash
-npm run dev            # start dev server
-npm run build          # type-check + build
-npm run build-only     # build without type-check
-npm run type-check     # vue-tsc type check
-npm run lint           # ESLint with auto-fix
-npm run prettier       # format all files
-npm run clean          # remove dist/
+pnpm run dev            # start dev server
+pnpm run build          # type-check + build
+pnpm run build-only     # build without type-check
+pnpm run type-check     # vue-tsc type check
+pnpm run lint           # ESLint with auto-fix
+pnpm run prettier       # format all files
+pnpm run clean          # remove dist/
 ```
