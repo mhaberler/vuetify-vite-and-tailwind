@@ -2,15 +2,15 @@
   "name": "Flight Review",
   "short_name": "Flight",
   "description": "Flight trajectory review and visualization",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
-  "scope": "/",
+  "scope": "./",
   "theme_color": "#1f1f1f",
   "background_color": "#ffffff",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.ico",
+      "src": "favicon.ico",
       "sizes": "32x32",
       "type": "image/x-icon"
     }

@@ -76,6 +76,158 @@
       decoder: terrainDecoder,
     }),
   )
+  const imageryModels = markRaw([
+    new Cesium.ProviderViewModel({
+      name: 'VersaTiles Satellite',
+      tooltip: 'Global Sentinel-2 imagery (No stretching)',
+      iconUrl: versaTilesIconUrl,
+      creationFunction: () =>
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
+          maximumLevel: 12,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit(
+            'Copernicus Sentinel-2 via VersaTiles',
+            true,
+          ),
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'OpenStreetMap',
+      tooltip: 'OpenStreetMap standard tiles',
+      iconUrl: 'https://www.openstreetmap.org/favicon.ico',
+      creationFunction: () =>
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+          maximumLevel: 19,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit('© OpenStreetMap contributors', true),
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'OpenTopoMap',
+      tooltip: 'OpenTopoMap standard tiles',
+      iconUrl: 'https://opentopomap.org/favicon.ico',
+      creationFunction: () =>
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          subdomains: ['a', 'b', 'c'],
+          maximumLevel: 17,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit('© OpenTopoMap contributors', true),
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'OpenFlightMaps',
+      tooltip: 'OpenFlightMaps aeronautical chart tiles',
+      iconUrl: 'https://openflightmaps.org/favicon.ico',
+      creationFunction: () =>
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://nwy-tiles-api.prod.newaydata.com/tiles/{z}/{x}/{y}.png?path=latest/aero/latest',
+          tileWidth: 512,
+          tileHeight: 512,
+          maximumLevel: 11,
+          enablePickFeatures: false,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit(
+            '(c) <a href="https://openflightmaps.org/" target="_blank">Open Flightmaps association</a>, (c) OpenStreetMap contributors, NASA elevation data',
+            true,
+          ),
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'Austria Basemap',
+      iconUrl:
+        'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
+      tooltip: 'Austrian OGD Basemap Ortho',
+      creationFunction: () =>
+        new Cesium.WebMapTileServiceImageryProvider({
+          url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg',
+          layer: 'bmaporthofoto30cm',
+          style: 'normal',
+          format: 'image/jpeg',
+          tileMatrixSetID: 'google3857',
+          maximumLevel: 19,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          rectangle: Cesium.Rectangle.fromDegrees(8.78, 46.35, 17.5, 49.03),
+          credit: new Cesium.Credit('© basemap.at', true),
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'Karte Tirol Orthofoto',
+      tooltip: 'Tirol Orthophoto',
+      iconUrl: 'https://www.tirol.gv.at/favicon.ico',
+      creationFunction: () =>
+        new Cesium.UrlTemplateImageryProvider({
+          url: 'https://wmts.kartetirol.at/wmts/gdi_ortho/{z}/{x}/{y}.png',
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          maximumLevel: 18,
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'SWISSIMAGE',
+      tooltip: 'swisstopo SWISSIMAGE (10 cm / 25 cm)',
+      iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
+      creationFunction: () =>
+        new Cesium.WebMapTileServiceImageryProvider({
+          url: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{TileMatrix}/{TileCol}/{TileRow}.jpeg',
+          layer: 'ch.swisstopo.swissimage',
+          style: 'default',
+          format: 'image/jpeg',
+          tileMatrixSetID: '3857',
+          maximumLevel: 20,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit('© swisstopo', true),
+        }),
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'France IGN Ortho',
+      tooltip: 'IGN BD ORTHO — 20 cm',
+      iconUrl:
+        'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
+      creationFunction: () =>
+        new Cesium.WebMapTileServiceImageryProvider({
+          url: 'https://data.geopf.fr/wmts',
+          layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
+          style: 'normal',
+          format: 'image/jpeg',
+          tileMatrixSetID: 'PM',
+          maximumLevel: 19,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          rectangle: Cesium.Rectangle.fromDegrees(-5.5, 41.3, 9.6, 51.1),
+          credit: new Cesium.Credit(
+            '© <a href="https://geopf.fr" target="_blank">IGN France</a>',
+            true,
+          ),
+        }),
+    }),
+  ])
+  const terrainModels = markRaw([
+    new Cesium.ProviderViewModel({
+      name: 'Mapterhorn Terrarium',
+      tooltip:
+        'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
+      iconUrl: mapterhornIconUrl,
+      creationFunction: () => martiniTerrainProvider,
+    }),
+    new Cesium.ProviderViewModel({
+      name: 'swisstopo Terrain',
+      tooltip:
+        'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
+      iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
+      creationFunction: () =>
+        Cesium.CesiumTerrainProvider.fromUrl(
+          'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
+          { requestVertexNormals: true },
+        ),
+    }),
+  ])
+  const initialImageryModel = computed(
+    () => imageryModels[settingsStore.startupImageryIndex ?? -1] ?? imageryModels[0],
+  )
+  const initialTerrainModel = computed(
+    () => terrainModels[settingsStore.startupTerrainIndex ?? -1] ?? terrainModels[1],
+  )
 
   function getCesiumRuntime () {
     return (window as Window & { Cesium?: typeof Cesium }).Cesium ?? Cesium
@@ -310,164 +462,6 @@
 
     const vm = viewer.baseLayerPicker.viewModel
 
-    const imageryModels = [
-      new Cesium.ProviderViewModel({
-        name: 'VersaTiles Satellite',
-        tooltip: 'Global Sentinel-2 imagery (No stretching)',
-        iconUrl: versaTilesIconUrl,
-        creationFunction: () =>
-          new Cesium.UrlTemplateImageryProvider({
-            url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
-            maximumLevel: 12,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            credit: new Cesium.Credit(
-              'Copernicus Sentinel-2 via VersaTiles',
-              true,
-            ),
-          }),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'OpenStreetMap',
-        tooltip: 'OpenStreetMap standard tiles',
-        iconUrl: 'https://www.openstreetmap.org/favicon.ico',
-        creationFunction: () =>
-          new Cesium.UrlTemplateImageryProvider({
-            url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
-            maximumLevel: 19,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            credit: new Cesium.Credit('© OpenStreetMap contributors', true),
-          }),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'OpenTopoMap',
-        tooltip: 'OpenTopoMap standard tiles',
-        iconUrl: 'https://opentopomap.org/favicon.ico',
-        creationFunction: () =>
-          new Cesium.UrlTemplateImageryProvider({
-            url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-            subdomains: ['a', 'b', 'c'],
-            maximumLevel: 17,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            credit: new Cesium.Credit('© OpenTopoMap contributors', true),
-          }),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'OpenFlightMaps',
-        tooltip: 'OpenFlightMaps aeronautical chart tiles',
-        iconUrl: 'https://openflightmaps.org/favicon.ico',
-        creationFunction: () =>
-          new Cesium.UrlTemplateImageryProvider({
-            url: 'https://nwy-tiles-api.prod.newaydata.com/tiles/{z}/{x}/{y}.png?path=latest/aero/latest',
-            tileWidth: 512,
-            tileHeight: 512,
-            maximumLevel: 11,
-            enablePickFeatures: false,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            credit: new Cesium.Credit(
-              '(c) <a href="https://openflightmaps.org/" target="_blank">Open Flightmaps association</a>, (c) OpenStreetMap contributors, NASA elevation data',
-              true,
-            ),
-          }),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'Austria Basemap',
-        iconUrl:
-          'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
-        tooltip: 'Austrian OGD Basemap Ortho',
-        creationFunction: () =>
-          new Cesium.WebMapTileServiceImageryProvider({
-            url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg',
-            layer: 'bmaporthofoto30cm',
-            style: 'normal',
-            format: 'image/jpeg',
-            tileMatrixSetID: 'google3857',
-            maximumLevel: 19,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            rectangle: Cesium.Rectangle.fromDegrees(8.78, 46.35, 17.5, 49.03),
-            credit: new Cesium.Credit('© basemap.at', true),
-          }),
-      }),
-
-      new Cesium.ProviderViewModel({
-        name: 'Karte Tirol Orthofoto',
-        tooltip: 'Tirol Orthophoto',
-        iconUrl: 'https://www.tirol.gv.at/favicon.ico',
-        creationFunction: () =>
-          new Cesium.UrlTemplateImageryProvider({
-            url: 'https://wmts.kartetirol.at/wmts/gdi_ortho/{z}/{x}/{y}.png',
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            maximumLevel: 18,
-          }),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'SWISSIMAGE',
-        tooltip: 'swisstopo SWISSIMAGE (10 cm / 25 cm)',
-        iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
-        creationFunction: () =>
-          new Cesium.WebMapTileServiceImageryProvider({
-            url: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{TileMatrix}/{TileCol}/{TileRow}.jpeg',
-            layer: 'ch.swisstopo.swissimage',
-            style: 'default',
-            format: 'image/jpeg',
-            tileMatrixSetID: '3857',
-            maximumLevel: 20,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            credit: new Cesium.Credit('© swisstopo', true),
-          }),
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'France IGN Ortho',
-        tooltip: 'IGN BD ORTHO — 20 cm',
-        iconUrl:
-          'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
-        creationFunction: () =>
-          new Cesium.WebMapTileServiceImageryProvider({
-            url: 'https://data.geopf.fr/wmts',
-            layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-            style: 'normal',
-            format: 'image/jpeg',
-            tileMatrixSetID: 'PM',
-            maximumLevel: 19,
-            tilingScheme: new Cesium.WebMercatorTilingScheme(),
-            rectangle: Cesium.Rectangle.fromDegrees(-5.5, 41.3, 9.6, 51.1),
-            credit: new Cesium.Credit(
-              '© <a href="https://geopf.fr" target="_blank">IGN France</a>',
-              true,
-            ),
-          }),
-      }),
-    ]
-
-    const terrainModels = [
-      new Cesium.ProviderViewModel({
-        name: 'Mapterhorn Terrarium',
-        tooltip:
-          'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
-        iconUrl: mapterhornIconUrl,
-        creationFunction: () => martiniTerrainProvider,
-      }),
-      new Cesium.ProviderViewModel({
-        name: 'swisstopo Terrain',
-        tooltip:
-          'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
-        iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
-        creationFunction: () =>
-          Cesium.CesiumTerrainProvider.fromUrl(
-            'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
-            { requestVertexNormals: true },
-          ),
-      }),
-    ]
-
-    vm.imageryProviderViewModels = imageryModels
-    vm.terrainProviderViewModels = terrainModels
-    vm.selectedImagery
-      = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1]
-        ?? vm.imageryProviderViewModels[0]
-    vm.selectedTerrain
-      = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1]
-        ?? vm.terrainProviderViewModels[1]
-
     watchProviderSelections(vm)
     watchCameraIdle(viewer)
 
@@ -507,7 +501,12 @@
       <vc-viewer
         :animation="true"
         base-layer-picker
+        :geocoder="false"
+        :imagery-provider-view-models="imageryModels"
+        :selected-imagery-provider-view-model="initialImageryModel"
+        :selected-terrain-provider-view-model="initialTerrainModel"
         style="width: 100%; height: 100%"
+        :terrain-provider-view-models="terrainModels"
         :timeline="true"
         @ready="onViewerReady"
       />

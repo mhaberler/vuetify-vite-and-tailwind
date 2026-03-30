@@ -28,6 +28,36 @@ const vueLeafletFix = {
   },
 }
 
+function ensureTrailingSlash (value: string) {
+  return value.endsWith('/') ? value : `${value}/`
+}
+
+function ensureLeadingSlash (value: string) {
+  return value.startsWith('/') ? value : `/${value}`
+}
+
+function resolveDeployBase (command: 'build' | 'serve', env: Record<string, string>) {
+  if (command === 'serve') {
+    return '/'
+  }
+
+  const explicitBase = env.DEPLOY_BASE?.trim()
+  if (explicitBase) {
+    return ensureTrailingSlash(ensureLeadingSlash(explicitBase))
+  }
+
+  const deployPrefix = ensureTrailingSlash(env.DEPLOY_PREFIX?.trim() || '/apps/')
+  const deployPathName = env.DEPLOY_PATH?.trim()
+    ? path.posix.basename(env.DEPLOY_PATH.trim())
+    : ''
+
+  if (!deployPathName) {
+    return '/'
+  }
+
+  return `${deployPrefix}${deployPathName}/`
+}
+
 function flattenCesiumOutput (): Plugin {
   let resolvedConfig: ResolvedConfig | null = null
 
@@ -71,13 +101,14 @@ function flattenCesiumOutput (): Plugin {
 export default defineConfig(({ command, mode }) => {
   const shouldRsync = process.argv.includes('--rsync')
   const env = loadEnv(mode, process.cwd(), '')
-  const deployPrefix = env.DEPLOY_PREFIX ?? '/apps/'
+  const base = resolveDeployBase(command, env)
 
   if (env.DEPLOY_USER && env.DEPLOY_PATH && env.DEPLOY_HOST && shouldRsync) {
     console.log(`rsync deploy to:  ${env.DEPLOY_USER}@${env.DEPLOY_HOST}:${env.DEPLOY_PATH}`)
   }
 
   return {
+    base,
     plugins: [
       vueLeafletFix,
       Vue({
@@ -139,7 +170,10 @@ export default defineConfig(({ command, mode }) => {
         'unplugin-vue-router/data-loaders/basic',
       ],
     },
-    define: { 'process.env': {} },
+    define: {
+      'process.env': {},
+      'CESIUM_BASE_URL': JSON.stringify(`${base}cesium/`),
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('src', import.meta.url)),
