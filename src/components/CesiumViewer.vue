@@ -241,6 +241,29 @@
         }),
       }),
       new Cesium.ProviderViewModel({
+        name: 'OpenStreetMap',
+        tooltip: 'OpenStreetMap standard tiles',
+        iconUrl: 'https://www.openstreetmap.org/favicon.ico',
+        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
+          url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+          maximumLevel: 19,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit('© OpenStreetMap contributors', true),
+        }),
+      }),
+      new Cesium.ProviderViewModel({
+        name: 'OpenTopoMap',
+        tooltip: 'OpenTopoMap standard tiles',
+        iconUrl: 'https://opentopomap.org/favicon.ico',
+        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
+          url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          subdomains: ['a', 'b', 'c'],
+          maximumLevel: 17,
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          credit: new Cesium.Credit('© OpenTopoMap contributors', true),
+        }),
+      }),
+      new Cesium.ProviderViewModel({
         name: 'France IGN Orthophoto',
         tooltip: 'IGN BD ORTHO — 20 cm',
         iconUrl: 'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
