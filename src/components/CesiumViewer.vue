@@ -301,6 +301,24 @@
             credit: new Cesium.Credit('© OpenTopoMap contributors', true),
           }),
       }),
+      new Cesium.ProviderViewModel({
+        name: 'OpenFlightMaps',
+        tooltip: 'OpenFlightMaps aeronautical chart tiles',
+        iconUrl: 'https://openflightmaps.org/favicon.ico',
+        creationFunction: () =>
+          new Cesium.UrlTemplateImageryProvider({
+            url: 'https://nwy-tiles-api.prod.newaydata.com/tiles/{z}/{x}/{y}.png?path=latest/aero/latest',
+            tileWidth: 512,
+            tileHeight: 512,
+            maximumLevel: 11,
+            enablePickFeatures: false,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            credit: new Cesium.Credit(
+              '(c) <a href="https://openflightmaps.org/" target="_blank">Open Flightmaps association</a>, (c) OpenStreetMap contributors, NASA elevation data',
+              true,
+            ),
+          }),
+      }),
       ...(openAipApiKey
         ? [
           new Cesium.ProviderViewModel({
