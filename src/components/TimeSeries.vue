@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" style="width: 100%; height: 100%;">
+  <div ref="container" style="width: 100%; height: 100%">
     <UplotVue v-if="width && height" :data="data" :options="options" />
   </div>
 </template>
@@ -15,10 +15,7 @@
   const options = computed(() => ({
     width: width.value,
     height: height.value,
-    series: [
-      {},
-      { label: 'Line 1', stroke: '#f66' },
-    ],
+    series: [{}, { label: 'Line 1', stroke: '#f66' }],
   }))
 
   const data = [

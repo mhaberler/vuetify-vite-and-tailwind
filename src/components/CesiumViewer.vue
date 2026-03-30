@@ -1,6 +1,9 @@
 <script setup lang="ts">
   import type { VcReadyObject } from 'vue-cesium/es/utils/types'
-  import { MartiniTerrainProvider, WorkerFarmTerrainDecoder } from '@macrostrat/cesium-martini'
+  import {
+    MartiniTerrainProvider,
+    WorkerFarmTerrainDecoder,
+  } from '@macrostrat/cesium-martini'
   import * as Cesium from 'cesium'
   import enUS from 'vue-cesium/es/locale/lang/en-us'
   import { useCesiumToken } from '@/composables/useCesiumToken'
@@ -29,15 +32,24 @@
   const settingsStore = useSettingsStore()
   const versaTilesIconUrl = `${import.meta.env.BASE_URL}versatiles-logo.png`
   const mapterhornIconUrl = `${import.meta.env.BASE_URL}mapterhorn-icon.png`
+  const openAipApiKey = import.meta.env.VITE_OPENAIP_API_KEY?.trim()
   const osmBuildingsAssetId = Number.parseInt('96188', 10)
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
   const buildingsLoadPromise = shallowRef<Promise<void> | null>(null)
   const compassWidget = shallowRef<{ destroy: () => void } | null>(null)
   const zoomControlWidget = shallowRef<{ destroy: () => void } | null>(null)
-  const imagerySelectionSubscription = shallowRef<SubscriptionHandle | null>(null)
-  const terrainSelectionSubscription = shallowRef<SubscriptionHandle | null>(null)
-  const defaultHomeDestination = Cesium.Cartesian3.fromDegrees(15.4395, 47.0707, 3500)
+  const imagerySelectionSubscription = shallowRef<SubscriptionHandle | null>(
+    null,
+  )
+  const terrainSelectionSubscription = shallowRef<SubscriptionHandle | null>(
+    null,
+  )
+  const defaultHomeDestination = Cesium.Cartesian3.fromDegrees(
+    15.4395,
+    47.0707,
+    3500,
+  )
   const defaultHomeOrientation = {
     heading: 0,
     pitch: Cesium.Math.toRadians(-65),
@@ -59,11 +71,15 @@
     },
   })
 
-  const terrainDecoder = new WorkerFarmTerrainDecoder({ worker: terrariumWorker })
-  const martiniTerrainProvider = markRaw(new MartiniTerrainProvider({
-    resource: terrainResource,
-    decoder: terrainDecoder,
-  }))
+  const terrainDecoder = new WorkerFarmTerrainDecoder({
+    worker: terrariumWorker,
+  })
+  const martiniTerrainProvider = markRaw(
+    new MartiniTerrainProvider({
+      resource: terrainResource,
+      decoder: terrainDecoder,
+    }),
+  )
 
   let mounted = true
   let buildingsLoadVersion = 0
@@ -80,13 +96,14 @@
   }
 
   function getStartupCameraState (): CameraState {
-    const hasSavedStartupView = settingsStore.retainStartupView
-      && settingsStore.startupLongitude != null
-      && settingsStore.startupLatitude != null
-      && settingsStore.startupHeight != null
-      && settingsStore.startupHeading != null
-      && settingsStore.startupPitch != null
-      && settingsStore.startupRoll != null
+    const hasSavedStartupView
+      = settingsStore.retainStartupView
+        && settingsStore.startupLongitude != null
+        && settingsStore.startupLatitude != null
+        && settingsStore.startupHeight != null
+        && settingsStore.startupHeading != null
+        && settingsStore.startupPitch != null
+        && settingsStore.startupRoll != null
 
     if (hasSavedStartupView) {
       const longitude = settingsStore.startupLongitude as number
@@ -97,11 +114,7 @@
       const roll = settingsStore.startupRoll as number
 
       return {
-        destination: Cesium.Cartesian3.fromDegrees(
-          longitude,
-          latitude,
-          height,
-        ),
+        destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
         orientation: {
           heading,
           pitch,
@@ -125,14 +138,22 @@
     const directIndex = providers.indexOf(selectedProvider)
     if (directIndex !== -1) return directIndex
 
-    return providers.findIndex(provider => provider.name === selectedProvider.name)
+    return providers.findIndex(
+      provider => provider.name === selectedProvider.name,
+    )
   }
 
   function saveSelectedProviders (viewModel: Cesium.BaseLayerPickerViewModel) {
     if (!settingsStore.retainImagery) return
 
-    const imageryIndex = getProviderIndex(viewModel.imageryProviderViewModels, viewModel.selectedImagery)
-    const terrainIndex = getProviderIndex(viewModel.terrainProviderViewModels, viewModel.selectedTerrain)
+    const imageryIndex = getProviderIndex(
+      viewModel.imageryProviderViewModels,
+      viewModel.selectedImagery,
+    )
+    const terrainIndex = getProviderIndex(
+      viewModel.terrainProviderViewModels,
+      viewModel.selectedTerrain,
+    )
 
     settingsStore.startupImageryIndex = imageryIndex >= 0 ? imageryIndex : null
     settingsStore.startupTerrainIndex = terrainIndex >= 0 ? terrainIndex : null
@@ -145,8 +166,12 @@
     const { camera } = viewerRef.value
     const { positionCartographic } = camera
 
-    settingsStore.startupLongitude = Cesium.Math.toDegrees(positionCartographic.longitude)
-    settingsStore.startupLatitude = Cesium.Math.toDegrees(positionCartographic.latitude)
+    settingsStore.startupLongitude = Cesium.Math.toDegrees(
+      positionCartographic.longitude,
+    )
+    settingsStore.startupLatitude = Cesium.Math.toDegrees(
+      positionCartographic.latitude,
+    )
     settingsStore.startupHeight = positionCartographic.height
     settingsStore.startupHeading = camera.heading
     settingsStore.startupPitch = camera.pitch
@@ -167,7 +192,10 @@
 
     const cesiumRuntime = getCesiumRuntime() as typeof Cesium & {
       knockout?: {
-        getObservable: (target: object, propertyName: string) => {
+        getObservable: (
+          target: object,
+          propertyName: string,
+        ) => {
           subscribe: (callback: () => void) => SubscriptionHandle
         }
       }
@@ -176,12 +204,16 @@
     const knockout = cesiumRuntime.knockout
     if (!knockout?.getObservable) return
 
-    imagerySelectionSubscription.value = knockout.getObservable(viewModel, 'selectedImagery').subscribe(() => {
-      saveSelectedProviders(viewModel)
-    })
-    terrainSelectionSubscription.value = knockout.getObservable(viewModel, 'selectedTerrain').subscribe(() => {
-      saveSelectedProviders(viewModel)
-    })
+    imagerySelectionSubscription.value = knockout
+      .getObservable(viewModel, 'selectedImagery')
+      .subscribe(() => {
+        saveSelectedProviders(viewModel)
+      })
+    terrainSelectionSubscription.value = knockout
+      .getObservable(viewModel, 'selectedTerrain')
+      .subscribe(() => {
+        saveSelectedProviders(viewModel)
+      })
   }
 
   onUnmounted(() => {
@@ -189,7 +221,7 @@
     try {
       terrariumWorker.terminate()
     } catch {
-      // noop
+    // noop
     }
     buildingsLoadVersion += 1
     buildingsLoadPromise.value = null
@@ -198,12 +230,12 @@
     try {
       destroyCompass()
     } catch {
-      // noop
+    // noop
     }
     try {
       destroyZoomControl()
     } catch {
-      // noop
+    // noop
     }
     clearProviderSelectionSubscriptions()
   })
@@ -233,110 +265,148 @@
         name: 'VersaTiles Satellite',
         tooltip: 'Global Sentinel-2 imagery (No stretching)',
         iconUrl: versaTilesIconUrl,
-        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
-          url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
-          maximumLevel: 12,
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          credit: new Cesium.Credit('Copernicus Sentinel-2 via VersaTiles', true),
-        }),
+        creationFunction: () =>
+          new Cesium.UrlTemplateImageryProvider({
+            url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
+            maximumLevel: 12,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            credit: new Cesium.Credit(
+              'Copernicus Sentinel-2 via VersaTiles',
+              true,
+            ),
+          }),
       }),
       new Cesium.ProviderViewModel({
         name: 'OpenStreetMap',
         tooltip: 'OpenStreetMap standard tiles',
         iconUrl: 'https://www.openstreetmap.org/favicon.ico',
-        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
-          url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
-          maximumLevel: 19,
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          credit: new Cesium.Credit('© OpenStreetMap contributors', true),
-        }),
+        creationFunction: () =>
+          new Cesium.UrlTemplateImageryProvider({
+            url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+            maximumLevel: 19,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            credit: new Cesium.Credit('© OpenStreetMap contributors', true),
+          }),
       }),
       new Cesium.ProviderViewModel({
         name: 'OpenTopoMap',
         tooltip: 'OpenTopoMap standard tiles',
         iconUrl: 'https://opentopomap.org/favicon.ico',
-        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
-          url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-          subdomains: ['a', 'b', 'c'],
-          maximumLevel: 17,
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          credit: new Cesium.Credit('© OpenTopoMap contributors', true),
-        }),
+        creationFunction: () =>
+          new Cesium.UrlTemplateImageryProvider({
+            url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+            subdomains: ['a', 'b', 'c'],
+            maximumLevel: 17,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            credit: new Cesium.Credit('© OpenTopoMap contributors', true),
+          }),
       }),
+      ...(openAipApiKey
+        ? [
+          new Cesium.ProviderViewModel({
+            name: 'OpenAIP',
+            tooltip: 'OpenAIP aeronautical chart overlay',
+            iconUrl: 'https://www.openaip.net/favicon.ico',
+            creationFunction: () =>
+              new Cesium.UrlTemplateImageryProvider({
+                url: `https://{s}.api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(openAipApiKey)}`,
+                subdomains: ['a', 'b', 'c'],
+                tilingScheme: new Cesium.WebMercatorTilingScheme(),
+                credit: new Cesium.Credit(
+                  '© <a href="https://www.openaip.net" target="_blank">OpenAIP</a> (CC BY-NC 4.0)',
+                  true,
+                ),
+              }),
+          }),
+        ]
+        : []),
       new Cesium.ProviderViewModel({
-        name: 'France IGN Orthophoto',
-        tooltip: 'IGN BD ORTHO — 20 cm',
-        iconUrl: 'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
-        creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
-          url: 'https://data.geopf.fr/wmts',
-          layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
-          style: 'normal',
-          format: 'image/jpeg',
-          tileMatrixSetID: 'PM',
-          maximumLevel: 19,
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          rectangle: Cesium.Rectangle.fromDegrees(-5.5, 41.3, 9.6, 51.1),
-          credit: new Cesium.Credit('© <a href="https://geopf.fr" target="_blank">IGN France</a>', true),
-        }),
+        name: 'Austria Basemap',
+        iconUrl:
+          'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
+        tooltip: 'Austrian OGD Basemap Ortho',
+        creationFunction: () =>
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg',
+            layer: 'bmaporthofoto30cm',
+            style: 'normal',
+            format: 'image/jpeg',
+            tileMatrixSetID: 'google3857',
+            maximumLevel: 19,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            rectangle: Cesium.Rectangle.fromDegrees(8.78, 46.35, 17.5, 49.03),
+            credit: new Cesium.Credit('© basemap.at', true),
+          }),
       }),
+
       new Cesium.ProviderViewModel({
         name: 'Karte Tirol Orthofoto',
         tooltip: 'Tirol Orthophoto',
         iconUrl: 'https://www.tirol.gv.at/favicon.ico',
-        creationFunction: () => new Cesium.UrlTemplateImageryProvider({
-          url: 'https://wmts.kartetirol.at/wmts/gdi_ortho/{z}/{x}/{y}.png',
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          maximumLevel: 18,
-        }),
+        creationFunction: () =>
+          new Cesium.UrlTemplateImageryProvider({
+            url: 'https://wmts.kartetirol.at/wmts/gdi_ortho/{z}/{x}/{y}.png',
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            maximumLevel: 18,
+          }),
       }),
       new Cesium.ProviderViewModel({
         name: 'SWISSIMAGE',
         tooltip: 'swisstopo SWISSIMAGE (10 cm / 25 cm)',
         iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
-        creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
-          url: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{TileMatrix}/{TileCol}/{TileRow}.jpeg',
-          layer: 'ch.swisstopo.swissimage',
-          style: 'default',
-          format: 'image/jpeg',
-          tileMatrixSetID: '3857',
-          maximumLevel: 20,
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          credit: new Cesium.Credit('© swisstopo', true),
-        }),
+        creationFunction: () =>
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{TileMatrix}/{TileCol}/{TileRow}.jpeg',
+            layer: 'ch.swisstopo.swissimage',
+            style: 'default',
+            format: 'image/jpeg',
+            tileMatrixSetID: '3857',
+            maximumLevel: 20,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            credit: new Cesium.Credit('© swisstopo', true),
+          }),
       }),
       new Cesium.ProviderViewModel({
-        name: 'Austria Basemap',
-        iconUrl: 'https://www.geoland.at/assets/images/IndexGrid/basemap_hover_en.png',
-        tooltip: 'Austrian OGD Basemap Ortho',
-        creationFunction: () => new Cesium.WebMapTileServiceImageryProvider({
-          url: 'https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{TileMatrix}/{TileRow}/{TileCol}.jpeg',
-          layer: 'bmaporthofoto30cm',
-          style: 'normal',
-          format: 'image/jpeg',
-          tileMatrixSetID: 'google3857',
-          maximumLevel: 19,
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          rectangle: Cesium.Rectangle.fromDegrees(8.78, 46.35, 17.5, 49.03),
-          credit: new Cesium.Credit('© basemap.at', true),
-        }),
+        name: 'France IGN Orthophoto',
+        tooltip: 'IGN BD ORTHO — 20 cm',
+        iconUrl:
+          'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
+        creationFunction: () =>
+          new Cesium.WebMapTileServiceImageryProvider({
+            url: 'https://data.geopf.fr/wmts',
+            layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
+            style: 'normal',
+            format: 'image/jpeg',
+            tileMatrixSetID: 'PM',
+            maximumLevel: 19,
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            rectangle: Cesium.Rectangle.fromDegrees(-5.5, 41.3, 9.6, 51.1),
+            credit: new Cesium.Credit(
+              '© <a href="https://geopf.fr" target="_blank">IGN France</a>',
+              true,
+            ),
+          }),
       }),
     ]
 
     const terrainModels = [
       new Cesium.ProviderViewModel({
-        name: 'swisstopo Terrain',
-        tooltip: 'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
-        iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
-        creationFunction: () => Cesium.CesiumTerrainProvider.fromUrl(
-          'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
-          { requestVertexNormals: true },
-        ),
-      }),
-      new Cesium.ProviderViewModel({
         name: 'Mapterhorn Terrarium',
-        tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
+        tooltip:
+          'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
         iconUrl: mapterhornIconUrl,
         creationFunction: () => martiniTerrainProvider,
+      }),
+      new Cesium.ProviderViewModel({
+        name: 'swisstopo Terrain',
+        tooltip:
+          'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
+        iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
+        creationFunction: () =>
+          Cesium.CesiumTerrainProvider.fromUrl(
+            'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
+            { requestVertexNormals: true },
+          ),
       }),
     ]
 
@@ -344,15 +414,27 @@
       // Valid Ion token — append custom providers alongside Ion defaults
       vm.imageryProviderViewModels.push(...imageryModels)
       vm.terrainProviderViewModels.push(...terrainModels)
-      const defaultTerrain = vm.terrainProviderViewModels.find((model: Cesium.ProviderViewModel) => model.name === 'Cesium World Terrain') ?? terrainModels[1]
-      vm.selectedImagery = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1] ?? imageryModels[0]
-      vm.selectedTerrain = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1] ?? defaultTerrain
+      const defaultTerrain
+        = vm.terrainProviderViewModels.find(
+          (model: Cesium.ProviderViewModel) =>
+            model.name === 'Cesium World Terrain',
+        ) ?? terrainModels[1]
+      vm.selectedImagery
+        = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1]
+          ?? imageryModels[0]
+      vm.selectedTerrain
+        = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1]
+          ?? defaultTerrain
     } else {
       // No Ion token — replace defaults entirely with custom providers
       vm.imageryProviderViewModels = imageryModels
       vm.terrainProviderViewModels = terrainModels
-      vm.selectedImagery = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1] ?? vm.imageryProviderViewModels[0]
-      vm.selectedTerrain = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1] ?? vm.terrainProviderViewModels[1]
+      vm.selectedImagery
+        = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1]
+          ?? vm.imageryProviderViewModels[0]
+      vm.selectedTerrain
+        = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1]
+          ?? vm.terrainProviderViewModels[1]
     }
 
     watchProviderSelections(vm)
@@ -363,7 +445,8 @@
   }
 
   async function loadBuildings (viewer: Cesium.Viewer) {
-    if (!hasToken.value || buildingsTileset.value || buildingsLoadPromise.value) return
+    if (!hasToken.value || buildingsTileset.value || buildingsLoadPromise.value)
+      return
 
     const startupCameraState = getStartupCameraState()
 
@@ -379,20 +462,38 @@
     buildingsLoadPromise.value = (async () => {
       try {
         const cesiumRuntime = getCesiumRuntime()
-        const resource = await cesiumRuntime.IonResource.fromAssetId(osmBuildingsAssetId, {
-          accessToken: accessToken.value,
-        })
+        const resource = await cesiumRuntime.IonResource.fromAssetId(
+          osmBuildingsAssetId,
+          {
+            accessToken: accessToken.value,
+          },
+        )
         const tileset = await cesiumRuntime.Cesium3DTileset.fromUrl(resource, {
           maximumScreenSpaceError: 8,
         })
         tileset.style = new cesiumRuntime.Cesium3DTileStyle({
           color: 'rgb(255, 255, 255)',
-        })
-        ;(tileset as Cesium.Cesium3DTileset & { showOutline?: boolean, enableShowOutline?: boolean }).showOutline = false
-        ;(tileset as Cesium.Cesium3DTileset & { showOutline?: boolean, enableShowOutline?: boolean }).enableShowOutline = false
+        });
+        (
+          tileset as Cesium.Cesium3DTileset & {
+            showOutline?: boolean
+            enableShowOutline?: boolean
+          }
+        ).showOutline = false;
+        (
+          tileset as Cesium.Cesium3DTileset & {
+            showOutline?: boolean
+            enableShowOutline?: boolean
+          }
+        ).enableShowOutline = false
 
         // Drop stale results if the toggle changed, token disappeared, or a newer load started.
-        if (!mounted || !settingsStore.show3DBuildings || !hasToken.value || loadVersion !== buildingsLoadVersion) {
+        if (
+          !mounted
+          || !settingsStore.show3DBuildings
+          || !hasToken.value
+          || loadVersion !== buildingsLoadVersion
+        ) {
           tileset.destroy()
           return
         }
@@ -420,17 +521,20 @@
           viewer.scene.primitives.remove(buildingsTileset.value)
         }
       } catch {
-        // noop
+      // noop
       }
       buildingsTileset.value = null
     }
   }
 
-  watch(() => settingsStore.show3DBuildings, enabled => {
-    if (!viewerRef.value) return
-    if (enabled) loadBuildings(viewerRef.value)
-    else unloadBuildings(viewerRef.value)
-  })
+  watch(
+    () => settingsStore.show3DBuildings,
+    enabled => {
+      if (!viewerRef.value) return
+      if (enabled) loadBuildings(viewerRef.value)
+      else unloadBuildings(viewerRef.value)
+    },
+  )
 
   watch(hasToken, hasValidToken => {
     if (!viewerRef.value || !settingsStore.show3DBuildings) return
@@ -450,7 +554,8 @@
   }
 
   async function createZoomControl (viewer: Cesium.Viewer) {
-    const { default: ZoomController } = await import('@cesium-extends/zoom-control')
+    const { default: ZoomController }
+      = await import('@cesium-extends/zoom-control')
     if (!mounted) return
     const startupCameraState = getStartupCameraState()
     zoomControlWidget.value = new ZoomController(viewer, {
@@ -463,53 +568,79 @@
     zoomControlWidget.value = null
   }
 
-  watch(() => settingsStore.showCompass, enabled => {
-    if (!viewerRef.value) return
-    if (enabled) createCompass(viewerRef.value)
-    else destroyCompass()
-  })
+  watch(
+    () => settingsStore.showCompass,
+    enabled => {
+      if (!viewerRef.value) return
+      if (enabled) createCompass(viewerRef.value)
+      else destroyCompass()
+    },
+  )
 
-  watch(() => settingsStore.showZoomControl, enabled => {
-    if (!viewerRef.value) return
-    if (enabled) createZoomControl(viewerRef.value)
-    else destroyZoomControl()
-  })
+  watch(
+    () => settingsStore.showZoomControl,
+    enabled => {
+      if (!viewerRef.value) return
+      if (enabled) createZoomControl(viewerRef.value)
+      else destroyZoomControl()
+    },
+  )
 
-  watch(() => settingsStore.retainImagery, enabled => {
-    if (!enabled || !viewerRef.value) return
-    saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
-  })
+  watch(
+    () => settingsStore.retainImagery,
+    enabled => {
+      if (!enabled || !viewerRef.value) return
+      saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
+    },
+  )
 
-  watch(() => appStore.startupViewSaveRequestId, requestId => {
-    if (requestId === 0 || !appStore.is3D) return
-    saveCurrentStartupView()
-  })
+  watch(
+    () => appStore.startupViewSaveRequestId,
+    requestId => {
+      if (requestId === 0 || !appStore.is3D) return
+      saveCurrentStartupView()
+    },
+  )
 
   function zoomIn () {
-    viewerRef.value?.camera.zoomIn(viewerRef.value.camera.positionCartographic.height * 0.4)
+    viewerRef.value?.camera.zoomIn(
+      viewerRef.value.camera.positionCartographic.height * 0.4,
+    )
   }
 
   function zoomOut () {
-    viewerRef.value?.camera.zoomOut(viewerRef.value.camera.positionCartographic.height * 0.6)
+    viewerRef.value?.camera.zoomOut(
+      viewerRef.value.camera.positionCartographic.height * 0.6,
+    )
   }
 </script>
 
 <template>
-  <div style="position: relative; width: 100%; height: 100%;">
+  <div style="position: relative; width: 100%; height: 100%">
     <vc-config-provider :locale="enUS">
       <vc-viewer
         :access-token="accessToken"
         :animation="true"
         base-layer-picker
-        style="width: 100%; height: 100%;"
+        style="width: 100%; height: 100%"
         :timeline="true"
         @ready="onViewerReady"
       />
-      <NorthArrow v-if="viewerRef && settingsStore.showNorth" :viewer="viewerRef" />
+      <NorthArrow
+        v-if="viewerRef && settingsStore.showNorth"
+        :viewer="viewerRef"
+      />
     </vc-config-provider>
     <div
       v-if="settingsStore.showZoom"
-      style="position: absolute; bottom: 180px; right: 12px; display: flex; flex-direction: column; gap: 20px;"
+      style="
+        position: absolute;
+        bottom: 180px;
+        right: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      "
     >
       <v-btn density="compact" icon="mdi-plus" size="large" @click="zoomIn" />
       <v-btn density="compact" icon="mdi-minus" size="large" @click="zoomOut" />
@@ -517,5 +648,4 @@
   </div>
 </template>
 
-<style>
-</style>
+<style></style>

@@ -39,7 +39,9 @@
     size="small"
     @click="resetNorth"
   >
-    <v-icon :style="{ transform: `rotate(${-Cesium.Math.toDegrees(heading)}deg)` }">
+    <v-icon
+      :style="{ transform: `rotate(${-Cesium.Math.toDegrees(heading)}deg)` }"
+    >
       mdi-navigation
     </v-icon>
   </v-btn>

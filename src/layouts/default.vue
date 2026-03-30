@@ -1,10 +1,5 @@
 <template>
-  <v-app-bar
-    v-if="showBar"
-    :collapse="false"
-    flat
-    title="Flight Review"
-  >
+  <v-app-bar v-if="showBar" :collapse="false" flat title="Flight Review">
     <template #append>
       <v-btn
         :icon="appStore.is3D ? 'mdi-map' : 'mdi-earth'"
@@ -24,8 +19,17 @@
         variant="text"
         @click="showGraph = !showGraph"
       />
-      <v-btn v-if="!isIOS" icon="mdi-fullscreen" variant="text" @click="toggleFullscreen" />
-      <v-btn icon="mdi-cog-outline" variant="text" @click="settingsOpen = true" />
+      <v-btn
+        v-if="!isIOS"
+        icon="mdi-fullscreen"
+        variant="text"
+        @click="toggleFullscreen"
+      />
+      <v-btn
+        icon="mdi-cog-outline"
+        variant="text"
+        @click="settingsOpen = true"
+      />
       <v-btn icon="mdi-menu" variant="text" @click="showBar = false" />
     </template>
   </v-app-bar>
@@ -34,16 +38,24 @@
     v-show="!showBar"
     icon="mdi-menu"
     size="x-small"
-    style="position: fixed; top: 8px; right: 8px; z-index: 1000; opacity: 0.7;"
+    style="position: fixed; top: 8px; right: 8px; z-index: 1000; opacity: 0.7"
     @click="showBar = true"
   />
 
-  <v-main :class="{ 'bar-hidden': !showBar }" style="height: calc(100vh - 16px);">
-    <Splitpanes horizontal style="height: 100%;">
+  <v-main
+    :class="{ 'bar-hidden': !showBar }"
+    style="height: calc(100vh - 16px)"
+  >
+    <Splitpanes horizontal style="height: 100%">
       <Pane>
         <router-view />
       </Pane>
-      <Pane v-if="showGraph" min-size="10" :size="50" style="background: rgb(var(--v-theme-surface));">
+      <Pane
+        v-if="showGraph"
+        min-size="10"
+        :size="50"
+        style="background: rgb(var(--v-theme-surface))"
+      >
         <TimeSeries />
       </Pane>
     </Splitpanes>
@@ -52,7 +64,6 @@
   <v-dialog v-model="settingsOpen" max-width="480">
     <v-card title="Settings">
       <v-card-text>
-
         <v-divider class="my-4" />
         <div class="text-subtitle-2 mb-2">API Keys</div>
         <div class="text-caption font-weight-medium mb-1">Cesium Ion Token</div>
@@ -68,17 +79,24 @@
             persistent-hint
             :type="showTokenText ? 'text' : 'password'"
             @click:append-inner="showTokenText = !showTokenText"
-            @click:clear="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
+            @click:clear="
+              cesiumTokenStore.clearToken();
+              cesiumTokenInput = cesiumTokenStore.token;
+            "
           />
           <v-btn
             class="mt-2 mr-2"
             :color="tokenSaved ? 'success' : 'primary'"
-            :disabled="!cesiumTokenInput || cesiumTokenInput === cesiumTokenStore.token || tokenValidating"
+            :disabled="
+              !cesiumTokenInput ||
+                cesiumTokenInput === cesiumTokenStore.token ||
+                tokenValidating
+            "
             :loading="tokenValidating"
             size="small"
             type="submit"
           >
-            {{ tokenSaved ? 'Saved!' : 'Save Token' }}
+            {{ tokenSaved ? "Saved!" : "Save Token" }}
           </v-btn>
           <v-btn
             class="mt-2"
@@ -87,23 +105,38 @@
             size="small"
             type="button"
             variant="outlined"
-            @click="cesiumTokenStore.clearToken(); cesiumTokenInput = cesiumTokenStore.token"
+            @click="
+              cesiumTokenStore.clearToken();
+              cesiumTokenInput = cesiumTokenStore.token;
+            "
           >
             Clear Token
           </v-btn>
-          <div v-if="tokenValidationFailed" class="text-caption mt-1 text-error">
+          <div
+            v-if="tokenValidationFailed"
+            class="text-caption mt-1 text-error"
+          >
             Invalid token
           </div>
-          <div v-else-if="cesiumTokenStore.isCustomToken" class="text-caption mt-1 text-medium-emphasis">
+          <div
+            v-else-if="cesiumTokenStore.isCustomToken"
+            class="text-caption mt-1 text-medium-emphasis"
+          >
             Using custom token (saved in cookie)
           </div>
         </form>
 
         <div class="text-caption font-weight-medium mb-1 mt-4">
           Bing Maps Key
-          <span class="font-italic text-medium-emphasis"> — optional, Bing layers work via Ion without this</span>
+          <span class="font-italic text-medium-emphasis">
+            — optional, Bing layers work via Ion without this</span>
         </div>
-        <form @submit.prevent="settingsStore.bingMapsKey = bingKeyInput; settingsStore.save()">
+        <form
+          @submit.prevent="
+            settingsStore.bingMapsKey = bingKeyInput;
+            settingsStore.save();
+          "
+        >
           <v-text-field
             v-model="bingKeyInput"
             :append-inner-icon="showBingKey ? 'mdi-eye-off' : 'mdi-eye'"
@@ -113,18 +146,26 @@
             label="Bing Maps Key"
             :type="showBingKey ? 'text' : 'password'"
             @click:append-inner="showBingKey = !showBingKey"
-            @click:clear="settingsStore.bingMapsKey = ''; settingsStore.save()"
+            @click:clear="
+              settingsStore.bingMapsKey = '';
+              settingsStore.save();
+            "
           />
           <v-btn
             class="mt-2"
             color="primary"
-            :disabled="!bingKeyInput || bingKeyInput === settingsStore.bingMapsKey"
+            :disabled="
+              !bingKeyInput || bingKeyInput === settingsStore.bingMapsKey
+            "
             size="small"
             type="submit"
           >
             Save Key
           </v-btn>
-          <div v-if="settingsStore.bingMapsKey" class="text-caption mt-1 text-medium-emphasis">
+          <div
+            v-if="settingsStore.bingMapsKey"
+            class="text-caption mt-1 text-medium-emphasis"
+          >
             Custom Bing key saved
           </div>
         </form>
@@ -162,7 +203,10 @@
           label="3D Buildings"
           @update:model-value="settingsStore.save()"
         />
-        <div v-if="!cesiumTokenStore.hasToken" class="text-caption mb-4 mt-n3 text-medium-emphasis">
+        <div
+          v-if="!cesiumTokenStore.hasToken"
+          class="text-caption mb-4 mt-n3 text-medium-emphasis"
+        >
           3D Buildings require a valid Cesium Ion token.
         </div>
         <v-switch
@@ -177,14 +221,13 @@
           label="Retain startup position and orientation"
           @update:model-value="updateRetainStartupView"
         />
-        <div v-if="hasSavedStartupView" class="text-caption text-medium-emphasis">
+        <div
+          v-if="hasSavedStartupView"
+          class="text-caption text-medium-emphasis"
+        >
           Saved startup view available
         </div>
-        <v-switch
-          v-model="darkMode"
-          hide-details
-          label="Dark mode"
-        />
+        <v-switch v-model="darkMode" hide-details label="Dark mode" />
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -239,14 +282,15 @@
   const settingsOpen = ref(false)
 
   const theme = useTheme()
-  const hasSavedStartupView = computed(() => (
-    settingsStore.startupLongitude != null
-    && settingsStore.startupLatitude != null
-    && settingsStore.startupHeight != null
-    && settingsStore.startupHeading != null
-    && settingsStore.startupPitch != null
-    && settingsStore.startupRoll != null
-  ))
+  const hasSavedStartupView = computed(
+    () =>
+      settingsStore.startupLongitude != null
+      && settingsStore.startupLatitude != null
+      && settingsStore.startupHeight != null
+      && settingsStore.startupHeading != null
+      && settingsStore.startupPitch != null
+      && settingsStore.startupRoll != null,
+  )
   const darkMode = computed({
     get: () => theme.global.name.value === 'dark',
     set: (val: boolean) => {
@@ -274,20 +318,23 @@
     settingsStore.save()
   }
 
-  watch(() => appStore.startupViewSaveSuccessId, saveSuccessId => {
-    if (saveSuccessId === 0) return
+  watch(
+    () => appStore.startupViewSaveSuccessId,
+    saveSuccessId => {
+      if (saveSuccessId === 0) return
 
-    startupViewSaved.value = true
+      startupViewSaved.value = true
 
-    if (startupViewSavedTimer != null) {
-      window.clearTimeout(startupViewSavedTimer)
-    }
+      if (startupViewSavedTimer != null) {
+        window.clearTimeout(startupViewSavedTimer)
+      }
 
-    startupViewSavedTimer = window.setTimeout(() => {
-      startupViewSaved.value = false
-      startupViewSavedTimer = null
-    }, 2000)
-  })
+      startupViewSavedTimer = window.setTimeout(() => {
+        startupViewSaved.value = false
+        startupViewSavedTimer = null
+      }, 2000)
+    },
+  )
 
   onUnmounted(() => {
     if (startupViewSavedTimer != null) {
