@@ -37,7 +37,9 @@
   const terrainSelectionSubscription = shallowRef<SubscriptionHandle | null>(
     null,
   )
+  const cameraListenerRemovers = shallowRef<Cesium.Event.RemoveCallback[]>([])
   const lastAppliedSyncRevision = ref(0)
+  let autosaveTimer: number | null = null
   const defaultHomeDestination = Cesium.Cartesian3.fromDegrees(
     15.4395,
     47.0707,
@@ -84,6 +86,28 @@
     imagerySelectionSubscription.value = null
     terrainSelectionSubscription.value?.dispose()
     terrainSelectionSubscription.value = null
+  }
+
+  function clearAutosaveTimer () {
+    if (autosaveTimer != null) {
+      window.clearTimeout(autosaveTimer)
+      autosaveTimer = null
+    }
+  }
+
+  function scheduleAutosave () {
+    clearAutosaveTimer()
+    autosaveTimer = window.setTimeout(() => {
+      saveCurrentStartupView()
+      autosaveTimer = null
+    }, 2000)
+  }
+
+  function clearCameraListeners () {
+    for (const removeListener of cameraListenerRemovers.value) {
+      removeListener()
+    }
+    cameraListenerRemovers.value = []
   }
 
   function approximateLeafletZoomToHeight (zoom: number | null) {
@@ -134,8 +158,7 @@
 
   function getStartupCameraState (): CameraState {
     const hasSavedStartupView
-      = settingsStore.retainStartupView
-        && settingsStore.startupLongitude != null
+      = settingsStore.startupLongitude != null
         && settingsStore.startupLatitude != null
         && settingsStore.startupHeight != null
         && settingsStore.startupHeading != null
@@ -181,8 +204,6 @@
   }
 
   function saveSelectedProviders (viewModel: Cesium.BaseLayerPickerViewModel) {
-    if (!settingsStore.retainImagery) return
-
     const imageryIndex = getProviderIndex(
       viewModel.imageryProviderViewModels,
       viewModel.selectedImagery,
@@ -198,7 +219,7 @@
   }
 
   function saveCurrentStartupView () {
-    if (!settingsStore.retainStartupView || !viewerRef.value) return
+    if (!viewerRef.value) return
 
     const { camera } = viewerRef.value
     const { positionCartographic } = camera
@@ -214,14 +235,22 @@
     settingsStore.startupPitch = camera.pitch
     settingsStore.startupRoll = camera.roll
 
-    if (settingsStore.retainImagery) {
-      saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
-      appStore.acknowledgeStartupViewSave()
-      return
-    }
+    saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
 
     settingsStore.save()
-    appStore.acknowledgeStartupViewSave()
+  }
+
+  function watchCameraIdle (viewer: Cesium.Viewer) {
+    clearCameraListeners()
+
+    cameraListenerRemovers.value = [
+      viewer.camera.moveStart.addEventListener(() => {
+        clearAutosaveTimer()
+      }),
+      viewer.camera.moveEnd.addEventListener(() => {
+        scheduleAutosave()
+      }),
+    ]
   }
 
   function watchProviderSelections (viewModel: Cesium.BaseLayerPickerViewModel) {
@@ -259,6 +288,8 @@
     } catch {
     // noop
     }
+    clearAutosaveTimer()
+    clearCameraListeners()
     viewerRef.value = null
     clearProviderSelectionSubscriptions()
   })
@@ -385,7 +416,7 @@
           }),
       }),
       new Cesium.ProviderViewModel({
-        name: 'France IGN Orthophoto',
+        name: 'France IGN Ortho',
         tooltip: 'IGN BD ORTHO — 20 cm',
         iconUrl:
           'https://www.ign.fr/publications-de-l-ign/institut/kiosque/kit-communication/cartes-ign/logo-cartes-ign-couleurs.png',
@@ -438,32 +469,16 @@
         ?? vm.terrainProviderViewModels[1]
 
     watchProviderSelections(vm)
+    watchCameraIdle(viewer)
 
-    if (settingsStore.retainImagery) {
-      saveSelectedProviders(vm)
-    }
+    saveSelectedProviders(vm)
   }
-
-  watch(
-    () => settingsStore.retainImagery,
-    enabled => {
-      if (!enabled || !viewerRef.value) return
-      saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
-    },
-  )
-
-  watch(
-    () => appStore.startupViewSaveRequestId,
-    requestId => {
-      if (requestId === 0 || !appStore.is3D) return
-      saveCurrentStartupView()
-    },
-  )
 
   watch(
     () => appStore.switchViewRequestId,
     requestId => {
-      if (requestId === 0 || !appStore.is3D || appStore.pendingMode !== false) return
+      if (requestId === 0 || !appStore.is3D || appStore.pendingMode !== false)
+        return
 
       const view = captureCesiumViewState()
       if (view) {

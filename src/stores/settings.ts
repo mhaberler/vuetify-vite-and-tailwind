@@ -3,8 +3,6 @@ import { defineStore } from 'pinia'
 const LS_KEY = 'app_settings'
 
 type PersistedSettings = {
-  retainImagery?: boolean
-  retainStartupView?: boolean
   startupImageryIndex?: number | null
   startupTerrainIndex?: number | null
   startupLongitude?: number | null
@@ -25,8 +23,6 @@ function loadSettings () {
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    retainImagery: false as boolean,
-    retainStartupView: false as boolean,
     startupImageryIndex: null as number | null,
     startupTerrainIndex: null as number | null,
     startupLongitude: null as number | null,
@@ -38,22 +34,8 @@ export const useSettingsStore = defineStore('settings', {
     ...loadSettings(),
   }),
   actions: {
-    clearRetainedImagery () {
-      this.startupImageryIndex = null
-      this.startupTerrainIndex = null
-    },
-    clearRetainedStartupView () {
-      this.startupLongitude = null
-      this.startupLatitude = null
-      this.startupHeight = null
-      this.startupHeading = null
-      this.startupPitch = null
-      this.startupRoll = null
-    },
     save () {
       localStorage.setItem(LS_KEY, JSON.stringify({
-        retainImagery: this.retainImagery,
-        retainStartupView: this.retainStartupView,
         startupImageryIndex: this.startupImageryIndex,
         startupTerrainIndex: this.startupTerrainIndex,
         startupLongitude: this.startupLongitude,

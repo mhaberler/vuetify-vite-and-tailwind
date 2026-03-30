@@ -8,15 +8,15 @@ A flight review and 3D/2D geospatial visualization app built with Vue 3 and Cesi
 - Multiple open-data **imagery providers**: VersaTiles Satellite (Sentinel-2), swisstopo SWISSIMAGE, France IGN orthophoto, Austria Basemap, Tirol orthophoto
 - Multiple **terrain providers**: swisstopo (Switzerland), Mapterhorn global elevation via PMTiles
 - **Time series panel** for telemetry data, resizable via splitpanes
-- Fullscreen and startup/imagery retention controls in Settings
+- Fullscreen plus automatic startup view and imagery persistence
 
 ## Getting Started
 
 ```bash
-pnpm install
-pnpm run dev       # dev server at http://localhost:3000
-pnpm run build     # type-check + production build
-pnpm run preview   # preview production build
+bun install
+bun run dev       # dev server at http://localhost:3000
+bun run build     # type-check + production build
+bun run preview   # preview production build
 ```
 
 ## Configuration
@@ -39,11 +39,11 @@ The app runs against open-data imagery and terrain sources without any proprieta
 ## Scripts
 
 ```bash
-pnpm run dev            # start dev server
-pnpm run build          # type-check + build
-pnpm run build-only     # build without type-check
-pnpm run type-check     # vue-tsc type check
-pnpm run lint           # ESLint with auto-fix
-pnpm run prettier       # format all files
-pnpm run clean          # remove dist/
+bun run dev            # start dev server
+bun run build          # type-check + build
+bun run build-only     # build without type-check
+bun run type-check     # vue-tsc type check
+bun run lint           # ESLint with auto-fix
+bun run prettier       # format all files
+bun run clean          # remove dist/
 ```

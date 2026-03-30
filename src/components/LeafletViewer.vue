@@ -42,9 +42,14 @@
 </template>
 
 <script lang="ts" setup>
-  import type { Map as LeafletMap } from 'leaflet'
-  import { LControlLayers, LLayerGroup, LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
   import type { SyncedViewState } from '@/stores/app'
+  import type { Map as LeafletMap } from 'leaflet'
+  import {
+    LControlLayers,
+    LLayerGroup,
+    LMap,
+    LTileLayer,
+  } from '@vue-leaflet/vue-leaflet'
   import { useAppStore } from '@/stores/app'
   import 'leaflet/dist/leaflet.css'
 
@@ -167,7 +172,8 @@
   watch(
     () => appStore.switchViewRequestId,
     requestId => {
-      if (requestId === 0 || appStore.is3D || appStore.pendingMode !== true) return
+      if (requestId === 0 || appStore.is3D || appStore.pendingMode !== true)
+        return
 
       const view = captureLeafletViewState()
       if (view) {

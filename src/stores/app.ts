@@ -18,20 +18,12 @@ export type SyncedViewState = {
 export const useAppStore = defineStore('app', {
   state: () => ({
     is3D: true,
-    startupViewSaveRequestId: 0,
-    startupViewSaveSuccessId: 0,
     switchViewRequestId: 0,
     pendingMode: null as boolean | null,
     syncedView: null as SyncedViewState | null,
     syncedViewRevision: 0,
   }),
   actions: {
-    requestStartupViewSave () {
-      this.startupViewSaveRequestId += 1
-    },
-    acknowledgeStartupViewSave () {
-      this.startupViewSaveSuccessId += 1
-    },
     requestModeToggle () {
       if (this.pendingMode != null) {
         return
