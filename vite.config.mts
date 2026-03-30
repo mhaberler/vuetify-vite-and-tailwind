@@ -10,9 +10,10 @@ import Components from 'unplugin-vue-components/vite'
 import { VueRouterAutoImports } from 'unplugin-vue-router'
 import VueRouter from 'unplugin-vue-router/vite'
 // Utilities
-import { defineConfig, type Plugin, type ResolvedConfig } from 'vite'
+import { defineConfig, loadEnv, type Plugin, type ResolvedConfig } from 'vite'
 import Cesium from 'vite-plugin-cesium'
 import DevtoolsJson from 'vite-plugin-devtools-json'
+import { run } from 'vite-plugin-run'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts-next'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
@@ -67,73 +68,94 @@ function flattenCesiumOutput (): Plugin {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    vueLeafletFix,
-    Vue({
-      template: { transformAssetUrls },
-    }),
-    VueJsx(),
-    Cesium(),
-    flattenCesiumOutput(),
-    tailwindcss(),
-    ...(mode === 'development' ? [DevtoolsJson(), VueDevTools()] : []),
-    VueRouter({
-      dts: 'src/typed-router.d.ts',
-    }),
-    Layouts(),
-    AutoImport({
-      imports: [
-        'vue',
-        VueRouterAutoImports,
-        {
-          pinia: ['defineStore', 'storeToRefs'],
+export default defineConfig(({ command, mode }) => {
+  const shouldRsync = process.argv.includes('--rsync')
+  const env = loadEnv(mode, process.cwd(), '')
+  const deployPrefix = env.DEPLOY_PREFIX ?? '/apps/'
+
+  if (env.DEPLOY_USER && env.DEPLOY_PATH && env.DEPLOY_HOST && shouldRsync) {
+    console.log(`rsync deploy to:  ${env.DEPLOY_USER}@${env.DEPLOY_HOST}:${env.DEPLOY_PATH}`)
+  }
+
+  return {
+    plugins: [
+      vueLeafletFix,
+      Vue({
+        template: { transformAssetUrls },
+      }),
+      VueJsx(),
+      Cesium(),
+      flattenCesiumOutput(),
+      tailwindcss(),
+      ...(mode === 'development' ? [DevtoolsJson(), VueDevTools()] : []),
+      ...(env.DEPLOY_USER && env.DEPLOY_PATH && env.DEPLOY_HOST && shouldRsync
+        ? [
+            run([{
+              name: 'Deploy via Rsync',
+              run: ['rsync', '-avz', '--delete', './dist/',
+                `${env.DEPLOY_USER}@${env.DEPLOY_HOST}:${env.DEPLOY_PATH}`],
+              build: true,
+              condition: file => file.includes('dist'),
+            }]),
+          ]
+        : []),
+      VueRouter({
+        dts: 'src/typed-router.d.ts',
+      }),
+      Layouts(),
+      AutoImport({
+        imports: [
+          'vue',
+          VueRouterAutoImports,
+          {
+            pinia: ['defineStore', 'storeToRefs'],
+          },
+        ],
+        exclude: [/\.worker\.[tj]s$/],
+        dts: 'src/auto-imports.d.ts',
+        eslintrc: {
+          enabled: true,
         },
+        vueTemplate: true,
+      }),
+      Components({
+        dts: 'src/components.d.ts',
+      }),
+      // https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin#readme
+      Vuetify({
+        autoImport: true,
+        styles: {
+          configFile: 'src/styles/settings.scss',
+        },
+      }),
+    ].filter(Boolean),
+    optimizeDeps: {
+      exclude: [
+        'vuetify',
+        'vue-router',
+        'vue-leaflet',
+        'unplugin-vue-router/runtime',
+        'unplugin-vue-router/data-loaders',
+        'unplugin-vue-router/data-loaders/basic',
       ],
-      exclude: [/\.worker\.[tj]s$/],
-      dts: 'src/auto-imports.d.ts',
-      eslintrc: {
-        enabled: true,
-      },
-      vueTemplate: true,
-    }),
-    Components({
-      dts: 'src/components.d.ts',
-    }),
-    // https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin#readme
-    Vuetify({
-      autoImport: true,
-      styles: {
-        configFile: 'src/styles/settings.scss',
-      },
-    }),
-  ],
-  optimizeDeps: {
-    exclude: [
-      'vuetify',
-      'vue-router',
-      'vue-leaflet',
-      'unplugin-vue-router/runtime',
-      'unplugin-vue-router/data-loaders',
-      'unplugin-vue-router/data-loaders/basic',
-    ],
-  },
-  define: { 'process.env': {} },
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('src', import.meta.url)),
     },
-    extensions: [
-      '.js',
-      '.json',
-      '.jsx',
-      '.mjs',
-      '.ts',
-      '.tsx',
-      '.vue',
-    ],
-  },
-  server: {
-    port: 3000,
-  },
-}))
+    define: { 'process.env': {} },
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('src', import.meta.url)),
+      },
+      extensions: [
+        '.js',
+        '.json',
+        '.jsx',
+        '.mjs',
+        '.ts',
+        '.tsx',
+        '.vue',
+      ],
+    },
+    server: {
+      port: 3000,
+    },
+  }
+})
