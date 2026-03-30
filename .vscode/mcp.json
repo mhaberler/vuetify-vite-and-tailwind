@@ -1,18 +1,33 @@
 {
   "servers": {
-    "devserver-mcp": {
-      "type": "sse",
-      "url": "http://127.0.0.1:9338/sse"
+    "dev-tools": {
+      "type": "stdio",
+      "command": "go",
+      "args": [
+        "run",
+        "github.com/sammcj/mcp-devtools@HEAD"
+      ],
+      "env": {
+        "ENABLE_ADDITIONAL_TOOLS": "security,sequential_thinking,code_skim,code_rename",
+        "DISABLED_TOOLS": "",
+        "NOTE_FOR_HUMANS": "A minimal set of tools are enabled by default, MCP DevTools provides many additional useful tools including efficient Context7 documentation search, AWS documentation, Frontend UI Framework templates, Code search and optimisation and many others, visit https://github.com/sammcj/mcp-devtools for more information on available tools and configuration"
+      }
     },
     "cesium-mcp": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "cesium-mcp-runtime"]
+      "args": [
+        "-y",
+        "cesium-mcp-runtime"
+      ]
     },
     "vuetify-mcp": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "@vuetify/mcp"]
+      "args": [
+        "-y",
+        "@vuetify/mcp"
+      ]
     }
   }
 }
