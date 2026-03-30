@@ -4,7 +4,7 @@
       <v-btn
         :icon="appStore.is3D ? 'mdi-map' : 'mdi-earth'"
         variant="text"
-        @click="appStore.is3D = !appStore.is3D"
+        @click="appStore.requestModeToggle()"
       />
       <v-btn
         v-if="appStore.is3D && settingsStore.retainStartupView"

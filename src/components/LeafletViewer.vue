@@ -42,7 +42,9 @@
 </template>
 
 <script lang="ts" setup>
+  import type { Map as LeafletMap } from 'leaflet'
   import { LControlLayers, LLayerGroup, LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
+  import type { SyncedViewState } from '@/stores/app'
   import { useAppStore } from '@/stores/app'
   import 'leaflet/dist/leaflet.css'
 
@@ -101,9 +103,51 @@
   }
 
   const appStore = useAppStore()
+  const roughViewScale = 20_000_000
   const zoom = ref(2)
   const center = ref<[number, number]>([20, 0])
-  const mapRef = ref()
+  const mapRef = ref<{ leafletObject?: LeafletMap } | null>(null)
+  const lastAppliedSyncRevision = ref(0)
+
+  function approximateCesiumHeightToZoom (height: number | null) {
+    if (height == null) return 8
+
+    const safeHeight = Math.max(height, 1)
+    const rawZoom = Math.log2(roughViewScale / safeHeight)
+
+    return Math.max(0, Math.min(18, Math.round(rawZoom)))
+  }
+
+  function captureLeafletViewState (): Omit<SyncedViewState, 'revision'> | null {
+    const map = mapRef.value?.leafletObject
+    if (!map) return null
+
+    const mapCenter = map.getCenter()
+
+    return {
+      latitude: mapCenter.lat,
+      longitude: mapCenter.lng,
+      height: null,
+      zoom: map.getZoom(),
+      heading: null,
+      pitch: null,
+      roll: null,
+      source: 'leaflet',
+    }
+  }
+
+  function applySyncedView (view: SyncedViewState) {
+    const map = mapRef.value?.leafletObject
+    if (!map || view.source === 'leaflet') return
+
+    const targetZoom = view.zoom ?? approximateCesiumHeightToZoom(view.height)
+    map.setView([view.latitude, view.longitude], targetZoom, {
+      animate: false,
+    })
+    center.value = [view.latitude, view.longitude]
+    zoom.value = targetZoom
+    lastAppliedSyncRevision.value = view.revision
+  }
 
   watch(
     () => appStore.is3D,
@@ -111,7 +155,25 @@
       if (!is3D) {
         await nextTick()
         mapRef.value?.leafletObject?.invalidateSize()
+
+        const view = appStore.syncedView
+        if (!view || view.revision === lastAppliedSyncRevision.value) return
+
+        applySyncedView(view)
       }
+    },
+  )
+
+  watch(
+    () => appStore.switchViewRequestId,
+    requestId => {
+      if (requestId === 0 || appStore.is3D || appStore.pendingMode !== true) return
+
+      const view = captureLeafletViewState()
+      if (view) {
+        appStore.publishSyncedView(view)
+      }
+      appStore.completePendingModeToggle()
     },
   )
 </script>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { SyncedViewState } from '@/stores/app'
   import type { VcReadyObject } from 'vue-cesium/es/utils/types'
   import {
     MartiniTerrainProvider,
@@ -36,6 +37,7 @@
   const terrainSelectionSubscription = shallowRef<SubscriptionHandle | null>(
     null,
   )
+  const lastAppliedSyncRevision = ref(0)
   const defaultHomeDestination = Cesium.Cartesian3.fromDegrees(
     15.4395,
     47.0707,
@@ -53,6 +55,7 @@
     new URL('terrarium.worker.ts', import.meta.url),
     { type: 'module' },
   )
+  const roughViewScale = 20_000_000
   const terrainResource = new PMTilesHeightmapResource({
     url: 'https://download.mapterhorn.com/planet.pmtiles',
     tileSize: 512,
@@ -81,6 +84,52 @@
     imagerySelectionSubscription.value = null
     terrainSelectionSubscription.value?.dispose()
     terrainSelectionSubscription.value = null
+  }
+
+  function approximateLeafletZoomToHeight (zoom: number | null) {
+    if (zoom == null) return 3500
+
+    const clampedZoom = Cesium.Math.clamp(zoom, 0, 18)
+    const height = roughViewScale / Math.pow(2, clampedZoom)
+
+    return height
+  }
+
+  function captureCesiumViewState (): Omit<SyncedViewState, 'revision'> | null {
+    if (!viewerRef.value) return null
+
+    const { camera } = viewerRef.value
+    const { positionCartographic } = camera
+
+    return {
+      latitude: Cesium.Math.toDegrees(positionCartographic.latitude),
+      longitude: Cesium.Math.toDegrees(positionCartographic.longitude),
+      height: positionCartographic.height,
+      zoom: null,
+      heading: camera.heading,
+      pitch: camera.pitch,
+      roll: camera.roll,
+      source: 'cesium',
+    }
+  }
+
+  function applySyncedView (view: SyncedViewState) {
+    if (!viewerRef.value || view.source === 'cesium') return
+
+    const targetHeight = view.height ?? approximateLeafletZoomToHeight(view.zoom)
+    viewerRef.value.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(
+        view.longitude,
+        view.latitude,
+        targetHeight,
+      ),
+      orientation: {
+        heading: view.heading ?? defaultHomeOrientation.heading,
+        pitch: view.pitch ?? defaultHomeOrientation.pitch,
+        roll: view.roll ?? defaultHomeOrientation.roll,
+      },
+    })
+    lastAppliedSyncRevision.value = view.revision
   }
 
   function getStartupCameraState (): CameraState {
@@ -408,6 +457,31 @@
     requestId => {
       if (requestId === 0 || !appStore.is3D) return
       saveCurrentStartupView()
+    },
+  )
+
+  watch(
+    () => appStore.switchViewRequestId,
+    requestId => {
+      if (requestId === 0 || !appStore.is3D || appStore.pendingMode !== false) return
+
+      const view = captureCesiumViewState()
+      if (view) {
+        appStore.publishSyncedView(view)
+      }
+      appStore.completePendingModeToggle()
+    },
+  )
+
+  watch(
+    () => appStore.is3D,
+    is3D => {
+      if (!is3D) return
+
+      const view = appStore.syncedView
+      if (!view || view.revision === lastAppliedSyncRevision.value) return
+
+      applySyncedView(view)
     },
   )
 </script>
