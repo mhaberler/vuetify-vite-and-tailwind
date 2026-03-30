@@ -4,10 +4,27 @@
   import * as Cesium from 'cesium'
   import enUS from 'vue-cesium/es/locale/lang/en-us'
   import { useCesiumToken } from '@/composables/useCesiumToken'
+  import { useAppStore } from '@/stores/app'
   import { useSettingsStore } from '@/stores/settings'
   import { PMTilesHeightmapResource } from '../resources/pmtiles-resource'
   import NorthArrow from './NorthArrow.vue'
 
+  type CameraOrientation = {
+    heading: number
+    pitch: number
+    roll: number
+  }
+
+  type CameraState = {
+    destination: Cesium.Cartesian3
+    orientation: CameraOrientation
+  }
+
+  type SubscriptionHandle = {
+    dispose: () => void
+  }
+
+  const appStore = useAppStore()
   const { token: accessToken, hasToken } = useCesiumToken()
   const settingsStore = useSettingsStore()
   const osmBuildingsAssetId = Number.parseInt('96188', 10)
@@ -16,8 +33,10 @@
   const buildingsLoadPromise = shallowRef<Promise<void> | null>(null)
   const compassWidget = shallowRef<{ destroy: () => void } | null>(null)
   const zoomControlWidget = shallowRef<{ destroy: () => void } | null>(null)
-  const homeDestination = Cesium.Cartesian3.fromDegrees(15.4395, 47.0707, 3500)
-  const homeOrientation = {
+  const imagerySelectionSubscription = shallowRef<SubscriptionHandle | null>(null)
+  const terrainSelectionSubscription = shallowRef<SubscriptionHandle | null>(null)
+  const defaultHomeDestination = Cesium.Cartesian3.fromDegrees(15.4395, 47.0707, 3500)
+  const defaultHomeOrientation = {
     heading: 0,
     pitch: Cesium.Math.toRadians(-65),
     roll: 0,
@@ -51,6 +70,118 @@
     return (window as Window & { Cesium?: typeof Cesium }).Cesium ?? Cesium
   }
 
+  function clearProviderSelectionSubscriptions () {
+    imagerySelectionSubscription.value?.dispose()
+    imagerySelectionSubscription.value = null
+    terrainSelectionSubscription.value?.dispose()
+    terrainSelectionSubscription.value = null
+  }
+
+  function getStartupCameraState (): CameraState {
+    const hasSavedStartupView = settingsStore.retainStartupView
+      && settingsStore.startupLongitude != null
+      && settingsStore.startupLatitude != null
+      && settingsStore.startupHeight != null
+      && settingsStore.startupHeading != null
+      && settingsStore.startupPitch != null
+      && settingsStore.startupRoll != null
+
+    if (hasSavedStartupView) {
+      const longitude = settingsStore.startupLongitude as number
+      const latitude = settingsStore.startupLatitude as number
+      const height = settingsStore.startupHeight as number
+      const heading = settingsStore.startupHeading as number
+      const pitch = settingsStore.startupPitch as number
+      const roll = settingsStore.startupRoll as number
+
+      return {
+        destination: Cesium.Cartesian3.fromDegrees(
+          longitude,
+          latitude,
+          height,
+        ),
+        orientation: {
+          heading,
+          pitch,
+          roll,
+        },
+      }
+    }
+
+    return {
+      destination: defaultHomeDestination,
+      orientation: defaultHomeOrientation,
+    }
+  }
+
+  function getProviderIndex (
+    providers: Cesium.ProviderViewModel[],
+    selectedProvider: Cesium.ProviderViewModel | undefined,
+  ) {
+    if (!selectedProvider) return -1
+
+    const directIndex = providers.indexOf(selectedProvider)
+    if (directIndex !== -1) return directIndex
+
+    return providers.findIndex(provider => provider.name === selectedProvider.name)
+  }
+
+  function saveSelectedProviders (viewModel: Cesium.BaseLayerPickerViewModel) {
+    if (!settingsStore.retainImagery) return
+
+    const imageryIndex = getProviderIndex(viewModel.imageryProviderViewModels, viewModel.selectedImagery)
+    const terrainIndex = getProviderIndex(viewModel.terrainProviderViewModels, viewModel.selectedTerrain)
+
+    settingsStore.startupImageryIndex = imageryIndex >= 0 ? imageryIndex : null
+    settingsStore.startupTerrainIndex = terrainIndex >= 0 ? terrainIndex : null
+    settingsStore.save()
+  }
+
+  function saveCurrentStartupView () {
+    if (!settingsStore.retainStartupView || !viewerRef.value) return
+
+    const { camera } = viewerRef.value
+    const { positionCartographic } = camera
+
+    settingsStore.startupLongitude = Cesium.Math.toDegrees(positionCartographic.longitude)
+    settingsStore.startupLatitude = Cesium.Math.toDegrees(positionCartographic.latitude)
+    settingsStore.startupHeight = positionCartographic.height
+    settingsStore.startupHeading = camera.heading
+    settingsStore.startupPitch = camera.pitch
+    settingsStore.startupRoll = camera.roll
+
+    if (settingsStore.retainImagery) {
+      saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
+      appStore.acknowledgeStartupViewSave()
+      return
+    }
+
+    settingsStore.save()
+    appStore.acknowledgeStartupViewSave()
+  }
+
+  function watchProviderSelections (viewModel: Cesium.BaseLayerPickerViewModel) {
+    clearProviderSelectionSubscriptions()
+
+    const cesiumRuntime = getCesiumRuntime() as typeof Cesium & {
+      knockout?: {
+        getObservable: (target: object, propertyName: string) => {
+          subscribe: (callback: () => void) => SubscriptionHandle
+        }
+      }
+    }
+
+    const knockout = cesiumRuntime.knockout
+    if (!knockout?.getObservable) return
+
+    imagerySelectionSubscription.value = knockout.getObservable(viewModel, 'selectedImagery').subscribe(() => {
+      saveSelectedProviders(viewModel)
+    })
+    terrainSelectionSubscription.value = knockout.getObservable(viewModel, 'selectedTerrain').subscribe(() => {
+      saveSelectedProviders(viewModel)
+    })
+  }
+
   onUnmounted(() => {
     mounted = false
     try {
@@ -72,6 +203,7 @@
     } catch {
       // noop
     }
+    clearProviderSelectionSubscriptions()
   })
 
   function onViewerReady ({ viewer }: VcReadyObject) {
@@ -82,9 +214,10 @@
     controller.inertiaTranslate = 0.1
 
     viewerRef.value = viewer
+    const startupCameraState = getStartupCameraState()
     viewer.camera.setView({
-      destination: homeDestination,
-      orientation: homeOrientation,
+      destination: startupCameraState.destination,
+      orientation: startupCameraState.orientation,
     })
 
     if (settingsStore.showCompass) createCompass(viewer)
@@ -186,24 +319,33 @@
       // Valid Ion token — append custom providers alongside Ion defaults
       vm.imageryProviderViewModels.push(...imageryModels)
       vm.terrainProviderViewModels.push(...terrainModels)
-      vm.selectedImagery = imageryModels[0]
-      vm.selectedTerrain = vm.terrainProviderViewModels.find((model: Cesium.ProviderViewModel) => model.name === 'Cesium World Terrain') ?? terrainModels[1]
+      const defaultTerrain = vm.terrainProviderViewModels.find((model: Cesium.ProviderViewModel) => model.name === 'Cesium World Terrain') ?? terrainModels[1]
+      vm.selectedImagery = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1] ?? imageryModels[0]
+      vm.selectedTerrain = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1] ?? defaultTerrain
     } else {
       // No Ion token — replace defaults entirely with custom providers
       vm.imageryProviderViewModels = imageryModels
       vm.terrainProviderViewModels = terrainModels
-      vm.selectedImagery = vm.imageryProviderViewModels[0]
-      vm.selectedTerrain = vm.terrainProviderViewModels[1]
+      vm.selectedImagery = vm.imageryProviderViewModels[settingsStore.startupImageryIndex ?? -1] ?? vm.imageryProviderViewModels[0]
+      vm.selectedTerrain = vm.terrainProviderViewModels[settingsStore.startupTerrainIndex ?? -1] ?? vm.terrainProviderViewModels[1]
+    }
+
+    watchProviderSelections(vm)
+
+    if (settingsStore.retainImagery) {
+      saveSelectedProviders(vm)
     }
   }
 
   async function loadBuildings (viewer: Cesium.Viewer) {
     if (!hasToken.value || buildingsTileset.value || buildingsLoadPromise.value) return
 
+    const startupCameraState = getStartupCameraState()
+
     if (viewer.camera.positionCartographic.height > 100_000) {
       viewer.camera.flyTo({
-        destination: homeDestination,
-        orientation: homeOrientation,
+        destination: startupCameraState.destination,
+        orientation: startupCameraState.orientation,
         duration: 1.5,
       })
     }
@@ -285,8 +427,9 @@
   async function createZoomControl (viewer: Cesium.Viewer) {
     const { default: ZoomController } = await import('@cesium-extends/zoom-control')
     if (!mounted) return
+    const startupCameraState = getStartupCameraState()
     zoomControlWidget.value = new ZoomController(viewer, {
-      home: homeDestination,
+      home: startupCameraState.destination,
     })
   }
 
@@ -305,6 +448,16 @@
     if (!viewerRef.value) return
     if (enabled) createZoomControl(viewerRef.value)
     else destroyZoomControl()
+  })
+
+  watch(() => settingsStore.retainImagery, enabled => {
+    if (!enabled || !viewerRef.value) return
+    saveSelectedProviders(viewerRef.value.baseLayerPicker.viewModel)
+  })
+
+  watch(() => appStore.startupViewSaveRequestId, requestId => {
+    if (requestId === 0 || !appStore.is3D) return
+    saveCurrentStartupView()
   })
 
   function zoomIn () {
