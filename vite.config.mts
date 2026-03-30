@@ -1,3 +1,5 @@
+import { rename } from 'node:fs/promises'
+import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 // Plugins
 import tailwindcss from '@tailwindcss/vite'
@@ -8,7 +10,7 @@ import Components from 'unplugin-vue-components/vite'
 import { VueRouterAutoImports } from 'unplugin-vue-router'
 import VueRouter from 'unplugin-vue-router/vite'
 // Utilities
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin, type ResolvedConfig } from 'vite'
 import Cesium from 'vite-plugin-cesium'
 import DevtoolsJson from 'vite-plugin-devtools-json'
 import VueDevTools from 'vite-plugin-vue-devtools'
@@ -25,6 +27,45 @@ const vueLeafletFix = {
   },
 }
 
+function flattenCesiumOutput (): Plugin {
+  let resolvedConfig: ResolvedConfig | null = null
+
+  return {
+    name: 'flatten-cesium-output',
+    apply: 'build',
+    configResolved (config) {
+      resolvedConfig = config
+    },
+    async closeBundle () {
+      if (!resolvedConfig) {
+        return
+      }
+
+      const baseSegments = resolvedConfig.base.split('/').filter(Boolean)
+      if (baseSegments.length === 0) {
+        return
+      }
+
+      const outDir = path.resolve(resolvedConfig.root, resolvedConfig.build.outDir)
+      const nestedCesiumDir = path.join(outDir, ...baseSegments, 'cesium')
+      const targetCesiumDir = path.join(outDir, 'cesium')
+
+      if (nestedCesiumDir === targetCesiumDir) {
+        return
+      }
+
+      try {
+        await rename(nestedCesiumDir, targetCesiumDir)
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException
+        if (err.code !== 'ENOENT') {
+          throw error
+        }
+      }
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -34,6 +75,7 @@ export default defineConfig(({ mode }) => ({
     }),
     VueJsx(),
     Cesium(),
+    flattenCesiumOutput(),
     tailwindcss(),
     ...(mode === 'development' ? [DevtoolsJson(), VueDevTools()] : []),
     VueRouter({

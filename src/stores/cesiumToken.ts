@@ -6,8 +6,7 @@ const COOKIE_KEY = 'cesium_ion_token'
 const COOKIE_EXPIRY_DAYS = 365
 
 function getDefaultToken () {
-  return import.meta.env.VITE_CESIUM_ION_TOKEN as string
-    || import.meta.env.VITE_CESIUM_TOKEN as string
+  return import.meta.env.VITE_OPENDATA_ION_TOKEN as string
     || ''
 }
 

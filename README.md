@@ -26,7 +26,7 @@ All configuration is optional — the app runs without any API keys using open-d
 
 | Variable                 | Description                                    |
 | ------------------------ | ---------------------------------------------- |
-| `VITE_CESIUM_ION_TOKEN`  | Cesium Ion access token for Ion-hosted layers  |
+| `VITE_OPENDATA_ION_TOKEN`  | Cesium Ion access token for Ion-hosted layers  |
 
 Runtime settings can also be entered in the **Settings** dialog:
 

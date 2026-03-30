@@ -9,6 +9,8 @@
 
   const props = defineProps<Props>()
   const $vc = useVueCesium()
+  const versaTilesIconUrl = `${import.meta.env.BASE_URL}versatiles-logo.png`
+  const mapterhornIconUrl = `${import.meta.env.BASE_URL}mapterhorn-icon.png`
 
   // ---- Imagery provider view models ----------------------------------------
 
@@ -18,7 +20,7 @@
     new Cesium.ProviderViewModel({
       name: 'VersaTiles Satellite',
       tooltip: 'Global Sentinel-2 imagery (no stretching)',
-      iconUrl: '/versatiles-logo.png',
+      iconUrl: versaTilesIconUrl,
       creationFunction: () => new Cesium.UrlTemplateImageryProvider({
         url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
         maximumLevel: 12,
@@ -105,7 +107,7 @@
     new Cesium.ProviderViewModel({
       name: 'Mapterhorn Terrarium',
       tooltip: 'Global elevation via PMTiles (free, no auth)',
-      iconUrl: '/mapterhorn-icon.png',
+      iconUrl: mapterhornIconUrl,
       creationFunction: () => props.martiniTerrainProvider,
     }),
   ]

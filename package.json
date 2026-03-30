@@ -13,7 +13,7 @@
     "prettier": "prettier --write --no-config \"**/*\"",
     "prettier-check": "prettier --check --no-config \"**/*\"",
     "clean": "bunx rimraf ./dist",
-    "deploy": "vite build --base=/apps/$npm_package_name/  && rsync -avz --delete dist/ mah@vps.mah.priv.at:/var/www/vps/apps/$npm_package_name/"
+    "deploy": "vite build --mode production --base=/apps/$npm_package_name/  && rsync -avz --delete dist/ mah@vps.mah.priv.at:/var/www/vps/apps/$npm_package_name/"
   },
   "dependencies": {
     "@cesium-extends/compass": "^1.2.2",

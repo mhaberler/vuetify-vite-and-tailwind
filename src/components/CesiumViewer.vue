@@ -27,6 +27,8 @@
   const appStore = useAppStore()
   const { token: accessToken, hasToken } = useCesiumToken()
   const settingsStore = useSettingsStore()
+  const versaTilesIconUrl = `${import.meta.env.BASE_URL}versatiles-logo.png`
+  const mapterhornIconUrl = `${import.meta.env.BASE_URL}mapterhorn-icon.png`
   const osmBuildingsAssetId = Number.parseInt('96188', 10)
   const viewerRef = shallowRef<Cesium.Viewer | null>(null)
   const buildingsTileset = shallowRef<Cesium.Cesium3DTileset | null>(null)
@@ -230,7 +232,7 @@
       new Cesium.ProviderViewModel({
         name: 'VersaTiles Satellite',
         tooltip: 'Global Sentinel-2 imagery (No stretching)',
-        iconUrl: '/versatiles-logo.png',
+        iconUrl: versaTilesIconUrl,
         creationFunction: () => new Cesium.UrlTemplateImageryProvider({
           url: 'https://tiles.versatiles.org/tiles/satellite/{z}/{x}/{y}',
           maximumLevel: 12,
@@ -310,7 +312,7 @@
       new Cesium.ProviderViewModel({
         name: 'Mapterhorn Terrarium',
         tooltip: 'Mapterhorn global elevation dataset encoded in Terrarium format via PMTiles (free, no auth)',
-        iconUrl: '/mapterhorn-icon.png',
+        iconUrl: mapterhornIconUrl,
         creationFunction: () => martiniTerrainProvider,
       }),
     ]
