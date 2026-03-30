@@ -1,8 +1,8 @@
 {
-  "name": "tmp-1",
+  "name": "cesium-opendata-viewer",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "vite --host",
     "build": "run-p type-check \"build-only {@}\" --",
@@ -12,7 +12,8 @@
     "lint": "eslint . --fix",
     "prettier": "prettier --write --no-config \"**/*\"",
     "prettier-check": "prettier --check --no-config \"**/*\"",
-    "clean": "bunx rimraf ./dist"
+    "clean": "bunx rimraf ./dist",
+    "deploy": "vite build --base=/apps/$npm_package_name/  && rsync -avz --delete dist/ mah@vps.mah.priv.at:/var/www/vps/apps/$npm_package_name/"
   },
   "dependencies": {
     "@cesium-extends/compass": "^1.2.2",
