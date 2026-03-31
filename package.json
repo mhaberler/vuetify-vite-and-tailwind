@@ -8,13 +8,14 @@
     "dev": "vite --host",
     "build": "bun run type-check && bun run build-only",
     "preview": "vite preview --host",
-    "build-only": "vite build",
+    "build-only": "vite build --mode production",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
     "prettier": "prettier --write --no-config \"**/*\"",
     "prettier-check": "prettier --check --no-config \"**/*\"",
     "clean": "bunx rimraf ./dist",
-    "deploy": "vite build --mode production -- --rsync"
+    "compress": "vite build --mode production -- --compress",
+    "deploy": "bun run build && bun run compress && vite build --mode production -- --rsync"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.2.10",
@@ -58,6 +59,7 @@
     "unplugin-vue-router": "^0.19.2",
     "vite": "^8.0.3",
     "vite-plugin-cesium": "^1.2.23",
+    "vite-plugin-compression": "^0.5.1",
     "vite-plugin-devtools-json": "^1.0.0",
     "vite-plugin-vue-devtools": "^8.1.1",
     "vite-plugin-vue-layouts-next": "^2.1.0",

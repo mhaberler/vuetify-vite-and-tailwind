@@ -12,6 +12,7 @@ import VueRouter from 'unplugin-vue-router/vite'
 // Utilities
 import { defineConfig, loadEnv, type Plugin, type ResolvedConfig } from 'vite'
 import Cesium from 'vite-plugin-cesium'
+import viteCompression from 'vite-plugin-compression'
 import DevtoolsJson from 'vite-plugin-devtools-json'
 import { run } from 'vite-plugin-run'
 import VueDevTools from 'vite-plugin-vue-devtools'
@@ -100,6 +101,7 @@ function flattenCesiumOutput (): Plugin {
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
   const shouldRsync = process.argv.includes('--rsync')
+  const shouldCompress = process.argv.includes('--compress')
   const env = loadEnv(mode, process.cwd(), '')
   const base = resolveDeployBase(command, env)
 
@@ -118,7 +120,18 @@ export default defineConfig(({ command, mode }) => {
       Cesium(),
       flattenCesiumOutput(),
       tailwindcss(),
+
       ...(mode === 'development' ? [DevtoolsJson(), VueDevTools()] : []),
+      ...(shouldCompress
+        ? [
+            viteCompression({
+              algorithm: 'brotliCompress',
+              ext: '.br',
+              threshold: 1024,
+              deleteOriginFile: false,
+            }),
+          ]
+        : []),
       ...(env.DEPLOY_USER && env.DEPLOY_PATH && env.DEPLOY_HOST && shouldRsync
         ? [
             run([{
