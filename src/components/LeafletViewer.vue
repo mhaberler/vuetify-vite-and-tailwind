@@ -7,50 +7,45 @@
     :zoom="zoom"
   >
     <l-control-layers />
+    <div
+      v-if="overlayWarning"
+      class="leaflet-overlay-warning"
+    >
+      {{ overlayWarning }}
+    </div>
     <l-tile-layer
       v-for="layer in basemaps"
       :key="layer.key"
       :attribution="layer.attr"
       layer-type="base"
+      :max-native-zoom="layer.maxNativeZoom"
       :max-zoom="layer.maxZoom"
       :name="layer.name"
       :opacity="layer.opacity"
       :subdomains="layer.subdomains"
       :tile-size="layer.tileSize"
+      :tms="layer.tms"
       :url="layer.url"
       :visible="layer.key === 'osm'"
       :z-index="layer.zIndex"
     />
-    <l-layer-group
-      layer-type="base"
-      :name="openflightmapsBasemap.name"
-      :visible="false"
-    >
-      <l-tile-layer
-        v-for="layer in openflightmapsBasemap.layers"
-        :key="layer.key"
-        :attribution="layer.attr"
-        :max-zoom="layer.maxZoom"
-        :opacity="layer.opacity"
-        :subdomains="layer.subdomains"
-        :tile-size="layer.tileSize"
-        :url="layer.url"
-        :z-index="layer.zIndex"
-      />
-    </l-layer-group>
     <l-tile-layer
       v-for="layer in overlays"
       :key="layer.key"
       :attribution="layer.attr"
       layer-type="overlay"
+      :max-native-zoom="layer.maxNativeZoom"
       :max-zoom="layer.maxZoom"
       :name="layer.name"
       :opacity="layer.opacity"
       :subdomains="layer.subdomains"
       :tile-size="layer.tileSize"
+      :tms="layer.tms"
       :url="layer.url"
       :visible="layer.visible ?? false"
       :z-index="layer.zIndex"
+      @tileerror="handleOverlayTileError(layer)"
+      @tileload="handleOverlayTileLoad(layer)"
     />
   </l-map>
 </template>
@@ -60,7 +55,6 @@
   import type { Map as LeafletMap } from 'leaflet'
   import {
     LControlLayers,
-    LLayerGroup,
     LMap,
     LTileLayer,
   } from '@vue-leaflet/vue-leaflet'
@@ -72,10 +66,12 @@
     name: string
     url: string
     attr: string
+    maxNativeZoom?: number
     maxZoom?: number
     opacity?: number
     subdomains?: string | string[]
     tileSize?: number
+    tms?: boolean
     visible?: boolean
     zIndex?: number
   }
@@ -83,11 +79,25 @@
   const skywaysOverlay: TileLayerDefinition = {
     key: 'skyways-all',
     name: 'Skyways',
-    url: `https://thermal.kk7.ch/tiles/skyways_all/{z}/{x}/{-y}.png?src=mah.priv.at`,
-    attr: 'Skyways &copy; <a href="https://thermal.kk7.ch/" target="_blank">thermal.kk7.ch</a>',
+    url: `https://thermal.kk7.ch/tiles/skyways_all_all/{z}/{x}/{y}.png?src=mah.priv.at`,
+    attr: 'thermal.kk7.ch <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC-BY-NC-SA</a>',
+    maxNativeZoom: 13,
     maxZoom: 18,
+    tms: true,
     visible: false,
     zIndex: 3,
+  }
+
+  const thermalsOverlay: TileLayerDefinition = {
+    key: 'thermals-jul-07',
+    name: 'Thermals Jul 07',
+    url: `https://thermal.kk7.ch/tiles/thermals_jul_07/{z}/{x}/{y}.png?src=mah.priv.at`,
+    attr: 'thermal.kk7.ch <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC-BY-NC-SA</a>',
+    maxNativeZoom: 12,
+    maxZoom: 18,
+    tms: true,
+    visible: false,
+    zIndex: 4,
   }
 
   const openTopoBasemap: TileLayerDefinition = {
@@ -96,11 +106,6 @@
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     attr: '&copy; OpenTopoMap contributors',
     maxZoom: 17,
-  }
-
-  const openTopoFlightLayer: TileLayerDefinition = {
-    ...openTopoBasemap,
-    opacity: 0.4,
   }
 
   const openFlightMapsLayer: TileLayerDefinition = {
@@ -131,13 +136,7 @@
     openTopoBasemap,
   ]
 
-  const overlays: TileLayerDefinition[] = [skywaysOverlay]
-
-  const openflightmapsBasemap = {
-    key: 'openflightmaps',
-    name: 'OpenFlightMaps',
-    layers: [openTopoFlightLayer, openFlightMapsLayer],
-  }
+  const overlays: TileLayerDefinition[] = [openFlightMapsLayer, skywaysOverlay, thermalsOverlay]
 
   const appStore = useAppStore()
   const roughViewScale = 20_000_000
@@ -145,6 +144,24 @@
   const center = ref<[number, number]>([20, 0])
   const mapRef = ref<{ leafletObject?: LeafletMap } | null>(null)
   const lastAppliedSyncRevision = ref(0)
+  const overlayLoadFailures = reactive<Record<string, boolean>>({})
+  const overlayWarning = computed(() => {
+    const failingNames = overlays
+      .filter(layer => overlayLoadFailures[layer.key] === true)
+      .map(layer => layer.name)
+
+    if (failingNames.length === 0) return null
+
+    return `${failingNames.join(', ')} tiles failed to load. Check access to thermal.kk7.ch for the current src host.`
+  })
+
+  function handleOverlayTileError (layer: TileLayerDefinition) {
+    overlayLoadFailures[layer.key] = true
+  }
+
+  function handleOverlayTileLoad (layer: TileLayerDefinition) {
+    overlayLoadFailures[layer.key] = false
+  }
 
   function approximateCesiumHeightToZoom (height: number | null) {
     if (height == null) return 8
@@ -215,3 +232,22 @@
     },
   )
 </script>
+
+<style scoped>
+  .leaflet-overlay-warning {
+    position: absolute;
+    top: 48px;
+    left: 48px;
+    z-index: 1000;
+    max-width: min(28rem, calc(100% - 96px));
+    padding: 0.625rem 0.875rem;
+    border: 1px solid rgba(145, 92, 0, 0.35);
+    border-radius: 0.5rem;
+    background: rgba(255, 244, 214, 0.95);
+    color: rgb(94, 58, 0);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+</style>
