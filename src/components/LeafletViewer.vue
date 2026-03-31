@@ -38,6 +38,20 @@
         :z-index="layer.zIndex"
       />
     </l-layer-group>
+    <l-tile-layer
+      v-for="layer in overlays"
+      :key="layer.key"
+      :attribution="layer.attr"
+      layer-type="overlay"
+      :max-zoom="layer.maxZoom"
+      :name="layer.name"
+      :opacity="layer.opacity"
+      :subdomains="layer.subdomains"
+      :tile-size="layer.tileSize"
+      :url="layer.url"
+      :visible="layer.visible ?? false"
+      :z-index="layer.zIndex"
+    />
   </l-map>
 </template>
 
@@ -62,15 +76,30 @@
     opacity?: number
     subdomains?: string | string[]
     tileSize?: number
+    visible?: boolean
     zIndex?: number
   }
 
-  const openTopoLayer: TileLayerDefinition = {
+  const skywaysOverlay: TileLayerDefinition = {
+    key: 'skyways-all',
+    name: 'Skyways',
+    url: `https://thermal.kk7.ch/tiles/skyways_all/{z}/{x}/{-y}.png?src=mah.priv.at`,
+    attr: 'Skyways &copy; <a href="https://thermal.kk7.ch/" target="_blank">thermal.kk7.ch</a>',
+    maxZoom: 18,
+    visible: false,
+    zIndex: 3,
+  }
+
+  const openTopoBasemap: TileLayerDefinition = {
     key: 'topo',
     name: 'OpenTopoMap',
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     attr: '&copy; OpenTopoMap contributors',
     maxZoom: 17,
+  }
+
+  const openTopoFlightLayer: TileLayerDefinition = {
+    ...openTopoBasemap,
     opacity: 0.4,
   }
 
@@ -99,12 +128,15 @@
       attr: '&copy; basemap.at',
       maxZoom: 18,
     },
+    openTopoBasemap,
   ]
+
+  const overlays: TileLayerDefinition[] = [skywaysOverlay]
 
   const openflightmapsBasemap = {
     key: 'openflightmaps',
-    name: 'openflightmaps',
-    layers: [openTopoLayer, openFlightMapsLayer],
+    name: 'OpenFlightMaps',
+    layers: [openTopoFlightLayer, openFlightMapsLayer],
   }
 
   const appStore = useAppStore()
