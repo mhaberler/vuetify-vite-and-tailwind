@@ -212,14 +212,18 @@
     }),
     new Cesium.ProviderViewModel({
       name: 'swisstopo Terrain',
-      tooltip:
-        'High-precision Swiss terrain from swisstopo (Quantized Mesh, vertex normals)',
       iconUrl: 'https://www.swisstopo.admin.ch/favicon.ico',
-      creationFunction: () =>
-        Cesium.CesiumTerrainProvider.fromUrl(
+      tooltip: 'High-precision Swiss terrain from swisstopo (Quantized Mesh)',
+      creationFunction: () => {
+        // Return the promise directly; Cesium's BaseLayerPicker handles Terrain promises
+        return Cesium.CesiumTerrainProvider.fromUrl(
           'https://3d.geo.admin.ch/ch.swisstopo.terrain.3d/v1/',
-          { requestVertexNormals: true },
-        ),
+          {
+            requestVertexNormals: true,
+            requestWaterMask: false,
+          },
+        )
+      },
     }),
   ])
   const initialImageryModel = computed(
