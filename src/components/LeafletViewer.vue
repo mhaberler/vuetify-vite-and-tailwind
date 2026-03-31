@@ -20,6 +20,7 @@
       layer-type="base"
       :max-native-zoom="layer.maxNativeZoom"
       :max-zoom="layer.maxZoom"
+      :min-zoom="layer.minZoom"
       :name="layer.name"
       :opacity="layer.opacity"
       :subdomains="layer.subdomains"
@@ -36,6 +37,7 @@
       layer-type="overlay"
       :max-native-zoom="layer.maxNativeZoom"
       :max-zoom="layer.maxZoom"
+      :min-zoom="layer.minZoom"
       :name="layer.name"
       :opacity="layer.opacity"
       :subdomains="layer.subdomains"
@@ -66,6 +68,7 @@
     name: string
     url: string
     attr: string
+    minZoom?: number
     maxNativeZoom?: number
     maxZoom?: number
     opacity?: number
@@ -75,6 +78,9 @@
     visible?: boolean
     zIndex?: number
   }
+
+  const openAipToken = import.meta.env.VITE_OPENAIP_TOKEN?.trim() ?? ''
+  const hasOpenAipToken = openAipToken.length > 0
 
   const skywaysOverlay: TileLayerDefinition = {
     key: 'skyways-all',
@@ -113,10 +119,22 @@
     name: 'OpenFlightMaps',
     url: 'https://nwy-tiles-api.prod.newaydata.com/tiles/{z}/{x}/{y}.png?path=latest/aero/latest',
     attr: '(c) <a href="https://openflightmaps.org/" target="_blank">Open Flightmaps association</a>, (c) OpenStreetMap contributors, NASA elevation data',
-    maxZoom: 19,
+    maxZoom: 16,
     opacity: 0.9,
     zIndex: 2,
   }
+
+  const openAipLayer: TileLayerDefinition | null = hasOpenAipToken
+    ? {
+      key: 'openaip-overlay',
+      name: 'openAIP',
+      url: `https://{s}.api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${openAipToken}`,
+      attr: '&copy; <a href="https://www.openaip.net/" target="_blank">openAIP</a>',
+      minZoom: 4,
+      maxZoom: 14,
+      opacity: 0.9,
+    }
+    : null
 
   const basemaps: TileLayerDefinition[] = [
     {
@@ -136,7 +154,12 @@
     openTopoBasemap,
   ]
 
-  const overlays: TileLayerDefinition[] = [openFlightMapsLayer, skywaysOverlay, thermalsOverlay]
+  const overlays: TileLayerDefinition[] = [
+    openFlightMapsLayer,
+    ...(openAipLayer ? [openAipLayer] : []),
+    skywaysOverlay,
+    thermalsOverlay,
+  ]
 
   const appStore = useAppStore()
   const roughViewScale = 20_000_000
@@ -152,7 +175,7 @@
 
     if (failingNames.length === 0) return null
 
-    return `${failingNames.join(', ')} tiles failed to load. Check access to thermal.kk7.ch for the current src host.`
+    return `${failingNames.join(', ')} tiles failed to load. Check overlay access, network reachability, or configured API credentials.`
   })
 
   function handleOverlayTileError (layer: TileLayerDefinition) {

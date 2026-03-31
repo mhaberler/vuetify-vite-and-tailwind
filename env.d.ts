@@ -3,6 +3,7 @@
 /// <reference types="vite-plugin-vue-layouts-next/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_OPENAIP_TOKEN?: string
 }
 
 interface ImportMeta {
