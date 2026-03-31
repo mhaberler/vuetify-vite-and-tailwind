@@ -226,12 +226,15 @@
       },
     }),
   ])
-  const initialImageryModel = computed(
-    () => imageryModels[settingsStore.startupImageryIndex ?? -1] ?? imageryModels[0],
-  )
-  const initialTerrainModel = computed(
-    () => terrainModels[settingsStore.startupTerrainIndex ?? -1] ?? terrainModels[1],
-  )
+
+  function getValidatedProviderIndex (
+    providers: Cesium.ProviderViewModel[],
+    index: number | null | undefined,
+  ) {
+    return typeof index === 'number' && index >= 0 && index < providers.length
+      ? index
+      : 0
+  }
 
   function getCesiumRuntime () {
     return (window as Window & { Cesium?: typeof Cesium }).Cesium ?? Cesium
@@ -467,9 +470,21 @@
     const vm = viewer.baseLayerPicker.viewModel
 
     watchProviderSelections(vm)
-    watchCameraIdle(viewer)
 
-    saveSelectedProviders(vm)
+    vm.selectedImagery = vm.imageryProviderViewModels[
+      getValidatedProviderIndex(
+        vm.imageryProviderViewModels,
+        settingsStore.startupImageryIndex,
+      )
+    ]
+    vm.selectedTerrain = vm.terrainProviderViewModels[
+      getValidatedProviderIndex(
+        vm.terrainProviderViewModels,
+        settingsStore.startupTerrainIndex,
+      )
+    ]
+
+    watchCameraIdle(viewer)
   }
 
   watch(
@@ -507,8 +522,6 @@
         base-layer-picker
         :geocoder="false"
         :imagery-provider-view-models="imageryModels"
-        :selected-imagery-provider-view-model="initialImageryModel"
-        :selected-terrain-provider-view-model="initialTerrainModel"
         style="width: 100%; height: 100%"
         :terrain-provider-view-models="terrainModels"
         :timeline="true"
