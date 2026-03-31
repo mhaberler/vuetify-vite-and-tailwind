@@ -24,6 +24,7 @@
     "@fontsource/sometype-mono": "^5.2.7",
     "@macrostrat/cesium-martini": "^1.6.0",
     "@mdi/font": "7.4.47",
+    "@playwright/test": "^1.58.2",
     "@types/splitpanes": "^2.2.6",
     "@vue-leaflet/vue-leaflet": "^0.10.1",
     "cesium": "^1.139.1",

@@ -1,23 +1,37 @@
 <template>
-  <v-app-bar v-if="showBar" :collapse="false" flat title="Flight Review">
+  <v-app-bar
+    v-if="showBar"
+    :collapse="false"
+    :density="isCompactScreen ? 'compact' : 'default'"
+    flat
+    title="Flight Review"
+  >
     <template #append>
       <v-btn
         :icon="appStore.is3D ? 'mdi-map' : 'mdi-earth'"
+        :size="isCompactScreen ? 'small' : 'default'"
         variant="text"
         @click="appStore.requestModeToggle()"
       />
       <v-btn
         icon="mdi-chart-line"
+        :size="isCompactScreen ? 'small' : 'default'"
         variant="text"
         @click="showGraph = !showGraph"
       />
       <v-btn
         v-if="!isIOS"
         icon="mdi-fullscreen"
+        :size="isCompactScreen ? 'small' : 'default'"
         variant="text"
         @click="toggleFullscreen"
       />
-      <v-btn icon="mdi-menu" variant="text" @click="showBar = false" />
+      <v-btn
+        icon="mdi-menu"
+        :size="isCompactScreen ? 'small' : 'default'"
+        variant="text"
+        @click="showBar = false"
+      />
     </template>
   </v-app-bar>
 
@@ -58,9 +72,23 @@
   const appStore = useAppStore()
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  const compactScreenQuery = window.matchMedia('(max-width: 768px)')
 
   const showBar = ref(true)
   const showGraph = ref(false)
+  const isCompactScreen = ref(compactScreenQuery.matches)
+
+  function updateCompactScreen (event: MediaQueryListEvent) {
+    isCompactScreen.value = event.matches
+  }
+
+  onMounted(() => {
+    compactScreenQuery.addEventListener('change', updateCompactScreen)
+  })
+
+  onUnmounted(() => {
+    compactScreenQuery.removeEventListener('change', updateCompactScreen)
+  })
 
   async function toggleFullscreen () {
     await (document.fullscreenElement

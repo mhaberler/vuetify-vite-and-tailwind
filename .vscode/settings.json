@@ -1,3 +1,9 @@
 {
-  "vue.hover.rich": true
+  "vue.hover.rich": true,
+  "mcp.servers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+    }
+  }
 }

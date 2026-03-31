@@ -40,6 +40,8 @@
   const cameraListenerRemovers = shallowRef<Cesium.Event.RemoveCallback[]>([])
   const lastAppliedSyncRevision = ref(0)
   let autosaveTimer: number | null = null
+  const compactScreenQuery = window.matchMedia('(max-width: 768px)')
+  const isCompactScreen = ref(compactScreenQuery.matches)
   const defaultHomeDestination = Cesium.Cartesian3.fromDegrees(
     15.4395,
     47.0707,
@@ -247,6 +249,10 @@
     terrainSelectionSubscription.value = null
   }
 
+  function updateCompactScreen (event: MediaQueryListEvent) {
+    isCompactScreen.value = event.matches
+  }
+
   function clearAutosaveTimer () {
     if (autosaveTimer != null) {
       window.clearTimeout(autosaveTimer)
@@ -442,6 +448,7 @@
   }
 
   onUnmounted(() => {
+    compactScreenQuery.removeEventListener('change', updateCompactScreen)
     try {
       terrariumWorker.terminate()
     } catch {
@@ -451,6 +458,10 @@
     clearCameraListeners()
     viewerRef.value = null
     clearProviderSelectionSubscriptions()
+  })
+
+  onMounted(() => {
+    compactScreenQuery.addEventListener('change', updateCompactScreen)
   })
 
   function onViewerReady ({ viewer }: VcReadyObject) {
@@ -518,15 +529,84 @@
   <div style="position: relative; width: 100%; height: 100%">
     <vc-config-provider :locale="enUS">
       <vc-viewer
-        :animation="true"
+        :animation="!isCompactScreen"
         base-layer-picker
         :geocoder="false"
         :imagery-provider-view-models="imageryModels"
         style="width: 100%; height: 100%"
         :terrain-provider-view-models="terrainModels"
-        :timeline="true"
+        :timeline="!isCompactScreen"
         @ready="onViewerReady"
       />
     </vc-config-provider>
   </div>
 </template>
+
+<style scoped>
+  @media (max-width: 768px) {
+    :deep(.cesium-viewer-toolbar) {
+      top: 68px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      max-width: min(86vw, 340px);
+    }
+
+    :deep(.cesium-baseLayerPicker-dropDown) {
+      right: 0;
+      left: auto;
+      width: min(86vw, 340px);
+      max-height: min(58vh, 520px);
+      overflow-y: auto;
+      padding: 14px;
+      backdrop-filter: blur(18px);
+    }
+
+    :deep(.cesium-baseLayerPicker-sectionTitle) {
+      font-size: 1.75rem;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    :deep(.cesium-baseLayerPicker-section) {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    :deep(.cesium-baseLayerPicker-choices) {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    :deep(.cesium-baseLayerPicker-item) {
+      width: 100%;
+      margin: 0;
+    }
+
+    :deep(.cesium-baseLayerPicker-itemIcon) {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
+
+    :deep(.cesium-baseLayerPicker-itemLabel) {
+      width: 100%;
+      margin-top: 6px;
+      font-size: 0.85rem;
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    :deep(.cesium-viewer-bottom) {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+    }
+  }
+</style>
