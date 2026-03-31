@@ -110,6 +110,16 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
+    build: {
+      rollupOptions: {
+        output: {
+        // This ensures the [hash] is present for long-term caching
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
+        },
+      },
+    },
     base,
     plugins: [
       vueLeafletFix,
